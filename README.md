@@ -1,1 +1,2 @@
 # Map_Dataset_Generator
+These files are for generating a database that can be used to train a CNN to place roadside units on a map. The dataset consists of images of the sampled regions and a csv file containing identifying information for that region and the coordinates of the intersection the RSU should be placed. The samples are taken from the specified region set by the user, with the map of downtown San Antonio used. The samples are rotated randomly to increase add more variability to samples.
