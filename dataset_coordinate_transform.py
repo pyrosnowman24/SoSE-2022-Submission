@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy import core
 
 
 class Dataset_Transformation():
@@ -10,6 +11,17 @@ class Dataset_Transformation():
         Sampled Map Array = Data image size
         CNN Output = (0,1)
     Examples of these functions being used can be found in the Dataset_Generator class.
+
+    Parameters
+         ----------
+         map_boundry : ndarray
+            Two corners used to bound the global map in the form of (lon,lat).
+
+         image_size : array
+            Width and height of the global map image
+        
+         data_size : array
+            Width and height of the samples recorded from the global map.
     """
 
 
@@ -206,6 +218,56 @@ class Dataset_Transformation():
         coordinates[:,0] = np.multiply(coordinates[:,0],self.data_size[0])
         coordinates[:,1] = np.multiply(coordinates[:,1],self.data_size[1])
         return coordinates
+
+    def output_to_map(self,coordinates,boundry_coordinates,angle):
+        """
+         Converts coordinates from CNN output to global map coordinates. 
+
+         Parameters
+         ----------
+         coordinates : ndarray
+            Coordinates with values scaled between 0 and 1. Scaling is done based on the size of the sampled region.
+         
+         boundry_coordinates : ndarray
+            Coordinates for the four corners of the sample. These points should be in the global map coordinate system. 
+
+         angle : float
+            Angle in radians that the sample is rotated. The rotation is counter-clockwise. 
+
+         Returns
+         -------
+         map_coordinates : ndarray
+            Coordinates in the global map coordinate system.
+         
+        """
+        sample_coordinates = self.output_to_sample(coordinates)
+        map_coordinates = self.sample_to_map(sample_coordinates,boundry_coordinates,angle)
+        return map_coordinates
+    
+    def map_to_output(self,coordinates,boundry_coordinates,angle):
+        """
+         Converts coordinates from global map coordinates to CNN output. 
+
+         Parameters
+         ----------
+         coordinates : ndarray
+            Coordinates in the global map coordinate system.   
+
+         boundry_coordinates : ndarray
+            Coordinates for the four corners of the sample. These points should be in the global map coordinate system. 
+
+         angle : float
+            Angle in radians that the sample is rotated. The rotation is counter-clockwise. 
+            
+         Returns
+         -------
+         output_coordinates : ndarray
+            Coordinates with values scaled between 0 and 1. Scaling is done based on the size of the sampled region.
+         
+        """
+        sample_coordinates = self.map_to_sample(coordinates,boundry_coordinates,angle)
+        output_coordinates = self.sample_to_output(sample_coordinates)
+        return output_coordinates
 
 # The below functions are for the transformations above
 

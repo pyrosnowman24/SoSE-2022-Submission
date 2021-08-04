@@ -12,7 +12,7 @@ world_img = Image.open(file_path)
 
 # Create transforms class
 bbox =  -98.5149, 29.4441, -98.4734, 29.3876 # San Antonio Downtown
-data_size = [250,500]
+data_size = [500,500]
 transforms = Dataset_Transformation(bbox,world_img.size,data_size)
 
 # Import data.csv file
