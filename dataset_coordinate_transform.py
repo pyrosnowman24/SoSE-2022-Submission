@@ -108,6 +108,8 @@ class Dataset_Transformation():
          final_coords : ndarray
             Coordinates in the sampled map coordinate system. It will have the same size as the coordinates input.
         """
+        if len(coordinates.shape) == 1:
+            coordinates = np.reshape(coordinates,(1,len(coordinates)))
         coordinates = np.vstack((boundry_coordinates,coordinates))
         bounds = self.getBounds(coordinates)
         bound_center = self.getBoundsCenter(bounds)
@@ -269,6 +271,32 @@ class Dataset_Transformation():
         output_coordinates = self.sample_to_output(sample_coordinates)
         return output_coordinates
 
+    def prepare_dataset(self,dataset):
+        """
+         Prepares the numpy array from the .csv for use with a CNN. Converts all the coordinates to the map coordinate system, then converts the solution to the output coordinate system.
+
+         Parameters
+         ----------
+         dataset : ndarray
+            Dataset from the .csv.   
+
+            
+         Returns
+         -------
+         output_coordinates : ndarray
+            Dataset with the coordinates transformed. 
+         
+        """
+        dataset[:,1:3] = self.coordinate_to_map(dataset[:,1:3])
+        dataset[:,3:5] = self.coordinate_to_map(dataset[:,3:5])
+        dataset[:,5:7] = self.coordinate_to_map(dataset[:,5:7])
+        dataset[:,7:9] = self.coordinate_to_map(dataset[:,7:9])
+        dataset[:,9:11] = self.coordinate_to_map(dataset[:,9:11])
+        dataset[:,12:] = self.coordinate_to_map(dataset[:,12:])
+        for i in range(dataset.shape[0]):
+            boundry_coordinates = dataset[i,1:9]
+            dataset[i,12:] = self.map_to_output(dataset[i,12:],boundry_coordinates=np.reshape(boundry_coordinates,(4,2)),angle=dataset[i,11])
+        return dataset
 # The below functions are for the transformations above
 
     def getBounds(self,points):

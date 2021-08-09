@@ -1,15 +1,17 @@
 from PIL.Image import FLIP_TOP_BOTTOM
-from diagonal_crop.util import getBounds
 from numpy.core.fromnumeric import diagonal
 from numpy.core.numeric import NaN
 import requests
-import json
+# import json
 import numpy as np
 import matplotlib.pyplot as plt
 import geotiler
 import os
 from datetime import datetime
 import pandas as pd
+import pathlib
+# import time
+
 
 from dataset_coordinate_transform import Dataset_Transformation
 
@@ -61,9 +63,11 @@ class Data_Generator():
         now = datetime.now()
         current_time = now.strftime("%c")
         folder_name = str(current_time)
-        path = '/home/acelab/Scripts/Map_dataset_script/Datasets'
+        current_path = pathlib.Path().resolve()
+        folder_path = 'Map_Dataset_Generator/Datasets'
+        path = os.path.join(current_path,folder_path)
         folder = os.path.join(path, folder_name)
-        image_folder = os.path.join(folder, "Images")  
+        image_folder = os.path.join(folder, "Images/samples")  
         os.makedirs(folder)
         os.makedirs(image_folder)
         data_file = os.path.join(folder, "data.csv")
@@ -76,7 +80,7 @@ class Data_Generator():
         self.df_data.loc[len(self.df_data)] = data_array.tolist()
 
     def save_image(self,folder,image,index,assigned_name=None):
-        name = "image"+str(index)+".png"
+        name = "image_"+str(index)+".png"
         if assigned_name is not None:
             name = assigned_name
         image_name = os.path.join(folder, name)
@@ -183,11 +187,14 @@ class Data_Generator():
             out;
         );
         """
-
-        response = requests.get(self.overpass_url, 
-                                params={'data': overpass_query})
-        data = response.json()
-        print(type(data))
+        while True: # Handles exceptions from the query to OpenStreetMaps, they can time out if too many are made.
+            try:
+                response = requests.get(self.overpass_url, 
+                                        params={'data': overpass_query})
+                data = response.json()
+                break
+            except:
+                continue
         return data
 
     def plot_map(self,map,solution = NaN): # plots a map and the coordinates of the sample area in it.
@@ -227,4 +234,4 @@ class Data_Generator():
 bbox =  -98.5149, 29.4441, -98.4734, 29.3876 # San Antonio Downtown
 data_size = [250,500]
 data_gen = Data_Generator(bbox,data_size = data_size)
-data_gen(3,plot=False,save_data=False)
+data_gen(1,plot=True,save_data=False)
