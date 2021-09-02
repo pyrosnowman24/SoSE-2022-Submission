@@ -1,8 +1,6 @@
 from PIL.Image import FLIP_TOP_BOTTOM
 from numpy.core.fromnumeric import diagonal
 from numpy.core.numeric import NaN
-import requests
-# import json
 import numpy as np
 import matplotlib.pyplot as plt
 import geotiler
@@ -10,7 +8,8 @@ import os
 from datetime import datetime
 import pandas as pd
 import pathlib
-# import time
+import osmnx as nx
+from shapely.geometry import Polygon
 
 
 from dataset_coordinate_transform import Dataset_Transformation
@@ -31,17 +30,18 @@ class Data_Generator():
         self.map  = geotiler.Map(extent=self.global_bbox, zoom = zoom)
         self.image = geotiler.render_map(self.map).transpose(FLIP_TOP_BOTTOM)
         self.transforms = Dataset_Transformation(bbox,self.image.size,data_size)
-        self.overpass_url = "https://overpass.kumi.systems/api/interpreter"
         self.df_data = pd.DataFrame(data=None,columns=["cord1","cord2","cord3","cord4","cord5","cord6","cord7","cord8","center1","center2","angle","solution1","solution2"])
 
-    def __call__(self,data_set_size,plot=False,save_data = True):
+    def __call__(self,data_set_size,plot=False,save_data = True, graph_file_name = "downtown_san_antonio.graphml"):
         self.plot = plot
+        current_path = pathlib.Path().resolve()
+        self.file_path = os.path.join(current_path,graph_file_name)
         if save_data: folder,data_file,image_folder = self.create_files()
         i = 0
         while i < data_set_size:
             coordinates,center,angle,diagonal = self.generate_area()
-            data = self.find_constrained_intersections(coordinates)
-            intersections = self.transforms.data_to_coordinate(data)
+            intersections = self.find_constrained_intersections(coordinates)
+            # intersections = self.transforms.data_to_coordinate(data)
             if intersections.shape[0] == 0:
                 print("Zero detected")
                 continue
@@ -50,7 +50,7 @@ class Data_Generator():
                 cropped_img,transformed_solution = self.crop_image(coordinates,angle,solution)
                 if plot:
                     self.plot_map(cropped_img,transformed_solution)
-                    self.plot_data(data,coordinates,solution = solution)
+                    self.plot_data(intersections,coordinates,solution = solution)
                     plt.show()
                 self.add_data(coordinates,center,angle,solution)
                 if save_data: self.save_image(image_folder,cropped_img,i)
@@ -165,37 +165,18 @@ class Data_Generator():
         rotated_coords = np.matmul(coord,rotation_matrix)
         return rotated_coords
 
+################
+
     def find_constrained_intersections(self,coordinates): # Finds the intersections in a rectangular area.
-        cord1 = coordinates[0,:]
-        cord2 = coordinates[1,:]
-        cord3 = coordinates[2,:]
-        cord4 = coordinates[3,:]
-        # Code for query can be developed in Overpass Turbo
-        overpass_query = f"""
-        [out:json];
-        way(poly:"{cord1[1]} {cord1[0]} {cord2[1]} {cord2[0]} {cord3[1]} {cord3[0]} {cord4[1]} {cord4[0]}");
-        //way[highway~"^(unclassified|residential|living_street|service|motorway|trunk|primary|secondary|tertiary|(motorway|trunk|primary|secondary)_link)$"]
-        way._[highway~"^(motorway|trunk|primary|secondary|tertiary|residential)$"]
-        [~"^(name|ref)$"~"."] -> .allways;
-        foreach.allways -> .currentway(
-            (.allways; - .currentway;)->.otherways_unfiltered; // Calculates the difference between all roads in the area and the current one being looked at
-            way.otherways_unfiltered(if:t["name"] != currentway.u(t["name"])) -> .otherways; // Removes any ways that were slected that have the same name as the current road
-            node(w.currentway)->.currentwaynodes;
-            node(w.otherways)->.otherwaynodes;
-            node.currentwaynodes.otherwaynodes;   // intersection of the current roadway and other roadways
-            node._(poly:"{cord1[1]} {cord1[0]} {cord2[1]} {cord2[0]} {cord3[1]} {cord3[0]} {cord4[1]} {cord4[0]}"); // The intersections returned before may still contain nodes outside the area, this removes them
-            out;
-        );
-        """
-        while True: # Handles exceptions from the query to OpenStreetMaps, they can time out if too many are made.
-            try:
-                response = requests.get(self.overpass_url, 
-                                        params={'data': overpass_query})
-                data = response.json()
-                break
-            except:
-                continue
-        return data
+        graph = self.poly_graph(coordinates)
+        gdf_nodes, gdf_edges = nx.graph_to_gdfs(graph)
+        all_intersections = np.array(list(zip(gdf_nodes.x,gdf_nodes.y)))
+        return all_intersections
+
+    def poly_graph(self,coordinates):
+        poly = Polygon(coordinates)
+        G = nx.graph_from_polygon(poly, network_type="drive_service")
+        return G
 
     def plot_map(self,map,solution = NaN): # plots a map and the coordinates of the sample area in it.
         fig,ax = plt.subplots(1)
@@ -207,8 +188,7 @@ class Data_Generator():
         ax.axis('equal')
         plt.draw()
 
-    def plot_data(self,data,coordinates,solution = NaN): # plots the map, the sample area, the intersections, and the solution
-        coords = self.transforms.data_to_coordinate(data)
+    def plot_data(self,coords,coordinates,solution = NaN): # plots the map, the sample area, the intersections, and the solution
         X = self.transforms.coordinate_to_map(coords)
         if not np.isnan(solution).all(): solution = self.transforms.coordinate_to_map(solution)
         coordinates = self.transforms.coordinate_to_map(coordinates)
