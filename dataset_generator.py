@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 import pandas as pd
 import pathlib
-# import time
+import time
 
 
 from dataset_coordinate_transform import Dataset_Transformation
@@ -50,12 +50,13 @@ class Data_Generator():
                 cropped_img,transformed_solution = self.crop_image(coordinates,angle,solution)
                 if plot:
                     self.plot_map(cropped_img,transformed_solution)
-                    self.plot_data(data,coordinates,solution = solution)
+                    self.plot_data(data,coordinates,solution = solution,angle=angle)
                     plt.show()
                 self.add_data(coordinates,center,angle,solution)
                 if save_data: self.save_image(image_folder,cropped_img,i)
                 print("Completed ",i)
                 i = i+1
+                time.sleep(1)
         if save_data: self.df_to_csv(data_file)
         if save_data: self.save_image(folder,self.image,0,assigned_name = "Map")
 
@@ -194,6 +195,7 @@ class Data_Generator():
                 data = response.json()
                 break
             except:
+                time.sleep(1)
                 continue
         return data
 
@@ -207,15 +209,22 @@ class Data_Generator():
         ax.axis('equal')
         plt.draw()
 
-    def plot_data(self,data,coordinates,solution = NaN): # plots the map, the sample area, the intersections, and the solution
+    def plot_data(self,data,coordinates,solution = NaN,angle = None): # plots the map, the sample area, the intersections, and the solution
         coords = self.transforms.data_to_coordinate(data)
         X = self.transforms.coordinate_to_map(coords)
         if not np.isnan(solution).all(): solution = self.transforms.coordinate_to_map(solution)
         coordinates = self.transforms.coordinate_to_map(coordinates)
+
+        sample_coords = self.transforms.map_to_sample(solution,coordinates,angle)
+        bound_coords = np.array(((250,0),(0,500),(0,0),(250,500)))
+        sample_coords = np.vstack((bound_coords,sample_coords))
+        reformed_coords = self.transforms.sample_to_map(sample_coords,coordinates,angle)
+
         fig,ax = plt.subplots(1)
         ax.scatter(coordinates[:,0],coordinates[:,1],marker='o',color='k')
-        ax.scatter(X[:, 0], X[:, 1], marker='x',c = 'r')
+        # ax.scatter(X[:, 0], X[:, 1], marker='x',c = 'r')
         if not np.isnan(solution).all(): ax.scatter(solution[:,0],solution[:,1],marker='o',color = 'g',zorder = 1)
+        if not np.isnan(solution).all(): ax.scatter(reformed_coords[:,0],reformed_coords[:,1],marker='x',color = 'r',zorder = 1)
         ax.imshow(self.image,origin = 'lower')
         ax.set_title('Intersections in San Antonio')
         ax.set_xlabel('Longitude')
