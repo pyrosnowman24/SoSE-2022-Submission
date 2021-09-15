@@ -34,10 +34,18 @@ class Data_Generator():
         self.overpass_url = "https://overpass.kumi.systems/api/interpreter"
         self.df_data = pd.DataFrame(data=None,columns=["cord1","cord2","cord3","cord4","cord5","cord6","cord7","cord8","center1","center2","angle","solution1","solution2"])
 
-    def __call__(self,data_set_size,plot=False,save_data = True):
+
+    def __call__(self,data_set_size,plot=False,save_data = True,named_file = None):
         self.plot = plot
-        if save_data: folder,data_file,image_folder = self.create_files()
-        i = 0
+        if named_file is None: self.new_file = True
+        else: self.new_file = False
+        if save_data: folder,data_file,image_folder = self.create_files(named_file)
+        if not self.new_file:
+            i = self.get_index(data_file)
+        else: i = 0
+        self.i_init = i
+        if save_data: self.save_image(folder,self.image,0,assigned_name = "Map")
+
         while i < data_set_size:
             coordinates,center,angle,diagonal = self.generate_area()
             data = self.find_constrained_intersections(coordinates)
@@ -50,30 +58,42 @@ class Data_Generator():
                 cropped_img,transformed_solution = self.crop_image(coordinates,angle,solution)
                 if plot:
                     self.plot_map(cropped_img,transformed_solution)
-                    self.plot_data(data,coordinates,solution = solution,angle=angle)
+                    self.plot_data(data,coordinates,solution = solution)
                     plt.show()
                 self.add_data(coordinates,center,angle,solution)
                 if save_data: self.save_image(image_folder,cropped_img,i)
+                if save_data: self.df_to_csv(i,data_file)
                 print("Completed ",i)
                 i = i+1
                 time.sleep(1)
-        if save_data: self.df_to_csv(data_file)
-        if save_data: self.save_image(folder,self.image,0,assigned_name = "Map")
 
-    def create_files(self):
-        now = datetime.now()
-        current_time = now.strftime("%c")
-        folder_name = str(current_time)
+    def get_index(self,data_file):
+        file = open(data_file, "r")
+        line_count = 0
+        for line in file:
+            if line != "\n":
+                line_count += 1
+        file.close()
+        return line_count-1
+
+    def create_files(self,named_file):
+        if self.new_file:
+            now = datetime.now()
+            current_time = now.strftime("%c")
+            folder_name = str(current_time)
+        else:
+            folder_name = named_file
         current_path = pathlib.Path().resolve()
         folder_path = 'Map_Dataset_Generator/Datasets'
         path = os.path.join(current_path,folder_path)
         folder = os.path.join(path, folder_name)
-        image_folder = os.path.join(folder, "Images/samples")  
-        os.makedirs(folder)
-        os.makedirs(image_folder)
+        image_folder = os.path.join(folder, "Images/samples")
         data_file = os.path.join(folder, "data.csv")
-        datas = open(data_file,"w+")
-        datas.close()
+        if self.new_file:
+            os.makedirs(folder)
+            os.makedirs(image_folder)
+            datas = open(data_file,"w+")
+            datas.close()
         return folder,data_file,image_folder
  
     def add_data(self,coordinates,center,angle,solution):
@@ -87,8 +107,13 @@ class Data_Generator():
         image_name = os.path.join(folder, name)
         image.save(image_name,"PNG")
 
-    def df_to_csv(self,data_file):
-        self.df_data.to_csv(data_file)
+    def df_to_csv(self,index,data_file):
+        self.df_data.index = np.arange(self.i_init,index+1)
+        if index == 0 and self.new_file:
+            self.df_data[index:index+1].to_csv(data_file, mode='a')
+        else:
+            self.df_data[-1:].to_csv(data_file, mode='a', header=False)
+        
 
     def generate_area(self): # Creates a tilted area that will be used for the sample. 
         rectangle_coordinates = np.zeros((4,2))
@@ -209,22 +234,15 @@ class Data_Generator():
         ax.axis('equal')
         plt.draw()
 
-    def plot_data(self,data,coordinates,solution = NaN,angle = None): # plots the map, the sample area, the intersections, and the solution
+    def plot_data(self,data,coordinates,solution = NaN): # plots the map, the sample area, the intersections, and the solution
         coords = self.transforms.data_to_coordinate(data)
         X = self.transforms.coordinate_to_map(coords)
         if not np.isnan(solution).all(): solution = self.transforms.coordinate_to_map(solution)
         coordinates = self.transforms.coordinate_to_map(coordinates)
-
-        sample_coords = self.transforms.map_to_sample(solution,coordinates,angle)
-        bound_coords = np.array(((250,0),(0,500),(0,0),(250,500)))
-        sample_coords = np.vstack((bound_coords,sample_coords))
-        reformed_coords = self.transforms.sample_to_map(sample_coords,coordinates,angle)
-
         fig,ax = plt.subplots(1)
         ax.scatter(coordinates[:,0],coordinates[:,1],marker='o',color='k')
-        # ax.scatter(X[:, 0], X[:, 1], marker='x',c = 'r')
+        ax.scatter(X[:, 0], X[:, 1], marker='x',c = 'r')
         if not np.isnan(solution).all(): ax.scatter(solution[:,0],solution[:,1],marker='o',color = 'g',zorder = 1)
-        if not np.isnan(solution).all(): ax.scatter(reformed_coords[:,0],reformed_coords[:,1],marker='x',color = 'r',zorder = 1)
         ax.imshow(self.image,origin = 'lower')
         ax.set_title('Intersections in San Antonio')
         ax.set_xlabel('Longitude')
@@ -243,4 +261,4 @@ class Data_Generator():
 bbox =  -98.5149, 29.4441, -98.4734, 29.3876 # San Antonio Downtown
 data_size = [250,500]
 data_gen = Data_Generator(bbox,data_size = data_size)
-data_gen(1,plot=True,save_data=False)
+data_gen(10000,plot=False,save_data=True,named_file= "Thu 26 Aug 2021 03:29:43 PM ")

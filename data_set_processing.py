@@ -17,7 +17,42 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 class RSU_Placement_CNN():
     def __init__(self,train_test_split = .7):
         self.train_test_split = train_test_split
+        self.import_files()
 
+    def __call__(self, epochs, init_lr = 1e-4):
+        model = self.assemble_full_model(*self.data_size,*self.data_size)
+
+        train_idx, valid_idx, test_idx = self.generate_split_indexes() 
+        batch_size = 200
+        valid_batch_size = 200
+        train_gen = self.generate_images(train_idx, batch_size=batch_size)
+        valid_gen = self.generate_images(valid_idx, batch_size=valid_batch_size)
+        opt = keras.optimizers.Adam(lr=init_lr, decay=init_lr / epochs)
+        model.compile(optimizer=opt, 
+                    loss={
+                        'x_output': 'mse', 
+                        'y_output': 'mse'},
+                    metrics={
+                        'x_output': 'mae', 
+                        'y_output': 'mae'})
+
+        model_path = os.path.join(self.dataset_path,"model_checkpoint")
+        callbacks = [
+        ModelCheckpoint(model_path, monitor='val_loss')
+        ]
+        history = model.fit(train_gen,
+                            steps_per_epoch=len(train_idx)//batch_size,
+                            epochs=epochs,
+                            callbacks=callbacks,
+                            validation_data=valid_gen,
+                            validation_steps=len(valid_idx)//valid_batch_size)
+        self.plot_history(history,fig_path = model_path)
+        var_path = self.create_var_file(model_path)
+        self.save_variable_file(var_path,epochs,init_lr,batch_size,valid_batch_size)
+        self.evaluate_model(model,test_idx)
+        plt.show()
+
+    def import_files(self):
         # Set all file paths
         current_path = pathlib.Path().resolve()
         folder_path = 'Map_Dataset_Generator/Datasets'
@@ -42,7 +77,7 @@ class RSU_Placement_CNN():
         # Import data.csv file
         self.data = pd.read_csv(data_file_path)
         self.data_array = self.data.to_numpy()
-        self.data_array = self.transforms.prepare_dataset(self.data_array,scale_output = True)
+        self.data_array = self.transforms.prepare_dataset(self.data_array)
         self.df = pd.DataFrame(self.data_array[:,-2:],columns = ['x','y'])
 
         # Import images
@@ -50,37 +85,16 @@ class RSU_Placement_CNN():
         files = glob.glob(os.path.join(images_path, "*.%s" % 'png'))
         self.df['file'] = files
 
-    def __call__(self, epochs, init_lr = 1e-4):
-        model = self.assemble_full_model(*self.data_size,*self.data_size)
+    def create_var_file(self,folder_path):
+        var_file = os.path.join(folder_path, "variables.csv")
+        datas = open(var_file,"w+")
+        datas.close()
+        return var_file
 
-        train_idx, valid_idx, test_idx = self.generate_split_indexes() 
-        batch_size = 32
-        valid_batch_size = 32
-        train_gen = self.generate_images(train_idx, batch_size=batch_size)
-        valid_gen = self.generate_images(valid_idx, batch_size=valid_batch_size)
-        opt = keras.optimizers.Adam(lr=init_lr, decay=init_lr / epochs)
-        model.compile(optimizer=opt, 
-                    loss={
-                        'x_output': 'mse', 
-                        'y_output': 'mse'},
-                    metrics={
-                        'x_output': 'mae', 
-                        'y_output': 'mae'})
-
-        model_path = os.path.join(self.dataset_path,"model_checkpoint")
-        callbacks = [
-        ModelCheckpoint(model_path, monitor='val_loss')
-        ]
-
-        history = model.fit(train_gen,
-                            steps_per_epoch=len(train_idx)//batch_size,
-                            epochs=epochs,
-                            callbacks=callbacks,
-                            validation_data=valid_gen,
-                            validation_steps=len(valid_idx)//valid_batch_size)
-        self.plot_history(history,fig_path = model_path)
-        self.evaluate_model(model,test_idx)
-        plt.show()
+    def save_variable_file(self,var_file,num_epochs,lr,batch,val_batch):
+        vars = pd.DataFrame(None,columns=["num_epochs","lr","batch","val_batch"])
+        vars.loc[0] = np.array((num_epochs,lr,batch,val_batch)).tolist()
+        vars.to_csv(var_file)
 
     def evaluate_model(self,model,test_idx):
         test_batch_size = len(test_idx)
@@ -190,7 +204,7 @@ class RSU_Placement_CNN():
     def build_x_branch(self, inputs, num_x):
         x = self.make_default_hidden_layers(inputs)
         x = layers.Flatten()(x)
-        x = layers.Dense(64)(x)
+        x = layers.Dense(128)(x)
         x = layers.Activation("relu")(x)
         x = layers.BatchNormalization()(x)
         x = layers.Dropout(0.5)(x)
@@ -201,7 +215,7 @@ class RSU_Placement_CNN():
     def build_y_branch(self, inputs, num_y):
         x = self.make_default_hidden_layers(inputs)
         x = layers.Flatten()(x)
-        x = layers.Dense(64)(x)
+        x = layers.Dense(128)(x)
         x = layers.Activation("relu")(x)
         x = layers.BatchNormalization()(x)
         x = layers.Dropout(0.5)(x)
@@ -219,7 +233,7 @@ class RSU_Placement_CNN():
                      name="rsu_placement_net")
         return model
 
-init_lr = 5e-2
+init_lr = 1e-4
 
 cnn = RSU_Placement_CNN()
-cnn(200)
+cnn(200,init_lr = init_lr)
