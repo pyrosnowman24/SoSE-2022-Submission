@@ -23,8 +23,8 @@ class RSU_Placement_CNN():
         model = self.assemble_full_model(*self.data_size,*self.data_size)
 
         train_idx, valid_idx, test_idx = self.generate_split_indexes() 
-        batch_size = 200
-        valid_batch_size = 200
+        batch_size = 150
+        valid_batch_size = 150
         train_gen = self.generate_images(train_idx, batch_size=batch_size)
         valid_gen = self.generate_images(valid_idx, batch_size=valid_batch_size)
         opt = keras.optimizers.Adam(lr=init_lr, decay=init_lr / epochs)
@@ -55,7 +55,7 @@ class RSU_Placement_CNN():
     def import_files(self):
         # Set all file paths
         current_path = pathlib.Path().resolve()
-        folder_path = 'Map_Dataset_Generator/Datasets'
+        folder_path = 'Datasets'
         dataset_name = 'Thu 26 Aug 2021 03:29:43 PM '
         map_name = 'Map'
         file_path = os.path.join(current_path,folder_path)
@@ -97,8 +97,8 @@ class RSU_Placement_CNN():
         vars.to_csv(var_file)
 
     def evaluate_model(self,model,test_idx):
-        test_batch_size = len(test_idx)
-        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=False)
+        test_batch_size = len(test_idx)/10
+        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
         x_pred, y_pred = model.predict(test_generator, steps=len(test_idx)//test_batch_size)
         test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=False)
         images, x_true, y_true = [], [], []
