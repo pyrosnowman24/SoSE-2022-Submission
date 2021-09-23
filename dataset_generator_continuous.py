@@ -205,7 +205,7 @@ class Data_Generator():
         [~"^(name|ref)$"~"."] -> .allways;
         foreach.allways -> .currentway(
             (.allways; - .currentway;)->.otherways_unfiltered; // Calculates the difference between all roads in the area and the current one being looked at
-            way.otherways_unfiltered(if:t["name"] != currentway.u(t["name"])) -> .otherways; // Removes any ways that were slected that have the same name as the current road
+            way.otherways_unfiltered(if:t["name"] != currentway.u(t["name"])) -> .otherways; // Removes any ways that were selected that have the same name as the current road
             node(w.currentway)->.currentwaynodes;
             node(w.otherways)->.otherwaynodes;
             node.currentwaynodes.otherwaynodes;   // intersection of the current roadway and other roadways
