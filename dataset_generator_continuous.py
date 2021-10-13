@@ -2,7 +2,6 @@ from PIL.Image import FLIP_TOP_BOTTOM
 from numpy.core.fromnumeric import diagonal
 from numpy.core.numeric import NaN
 import requests
-# import json
 import numpy as np
 import matplotlib.pyplot as plt
 import geotiler
@@ -11,8 +10,6 @@ from datetime import datetime
 import pandas as pd
 import pathlib
 import time
-
-
 from dataset_coordinate_transform import Dataset_Transformation
 
 class Data_Generator():

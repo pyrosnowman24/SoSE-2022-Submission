@@ -12,6 +12,7 @@ import pathlib
 import glob
 from sklearn import metrics
 from tensorflow.keras.callbacks import ModelCheckpoint
+import re
 
 
 class RSU_Placement_CNN():
@@ -83,6 +84,7 @@ class RSU_Placement_CNN():
         # Import images
         
         files = glob.glob(os.path.join(images_path, "*.%s" % 'png'))
+        files.sort(key=lambda f: int(re.sub('\D', '', f)))
         self.df['file'] = files
 
     def create_var_file(self,folder_path):
@@ -173,7 +175,6 @@ class RSU_Placement_CNN():
                 x_array.append(x_coord)
                 y_array.append(y_coord)
                 images.append(im)
-                
                 # yielding condition
                 if len(images) >= batch_size:
                     yield np.array(images), [np.array(x_array), np.array(y_array)]
@@ -236,4 +237,4 @@ class RSU_Placement_CNN():
 init_lr = 1e-4
 
 cnn = RSU_Placement_CNN()
-cnn(200,init_lr = init_lr)
+cnn(2,init_lr = init_lr)

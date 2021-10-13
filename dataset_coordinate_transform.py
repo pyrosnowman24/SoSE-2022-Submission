@@ -140,6 +140,8 @@ class Dataset_Transformation():
         """
         if len(coordinates.shape) == 1:
             coordinates = np.reshape(coordinates,(1,2))
+        bound_coords = np.array(((250,0),(0,500),(0,0),(250,500)))
+        coordinates = np.vstack((bound_coords,coordinates))
         bounds_coords = self.getBounds(boundry_coordinates)
         bounds_center = self.getBoundsCenter(bounds_coords)
         center = np.array(( self.data_size[0]/2 , self.data_size[1]/2 ))
@@ -148,7 +150,7 @@ class Dataset_Transformation():
         center2 = self.getBoundsCenter(bounds2)
         final_coords = self.recenter(rotated_points,center2,bounds_center)
 
-        return final_coords
+        return final_coords[4:,:]
 
     def data_to_coordinate(self,data): 
         """
@@ -249,7 +251,7 @@ class Dataset_Transformation():
         bound_coords = np.array(((250,0),(0,500),(0,0),(250,500)))
         sample_coordinates = np.vstack((bound_coords,sample_coordinates))
         map_coordinates = self.sample_to_map(sample_coordinates,boundry_coordinates,angle)
-        return map_coordinates[-1,:]
+        return map_coordinates[4:,:]
     
     def map_to_output(self,coordinates,boundry_coordinates,angle):
         """
