@@ -24,8 +24,8 @@ class RSU_Placement_CNN():
         model = self.assemble_full_model(*self.data_size,*self.data_size)
 
         train_idx, valid_idx, test_idx = self.generate_split_indexes() 
-        batch_size = 150
-        valid_batch_size = 150
+        batch_size = 128
+        valid_batch_size = 128
         train_gen = self.generate_images(train_idx, batch_size=batch_size)
         valid_gen = self.generate_images(valid_idx, batch_size=valid_batch_size)
         opt = keras.optimizers.Adam(lr=init_lr, decay=init_lr / epochs)
@@ -237,4 +237,4 @@ class RSU_Placement_CNN():
 init_lr = 1e-4
 
 cnn = RSU_Placement_CNN()
-cnn(2,init_lr = init_lr)
+cnn(1,init_lr = init_lr)

@@ -14,15 +14,12 @@ import glob
 from sklearn import metrics
 import re
 
-
-
-
 class Model_Test():
     def __init__(self,dataset_name,model_folder):
         self.import_files(dataset_name,model_folder)
         
-    def __call__(self):
-        self.plot_solution()
+    def __call__(self,number_tests = 2):
+        self.plot_solution(num_tests=number_tests)
 
     def import_files(self,dataset_name,model_folder):
         current_path = pathlib.Path().resolve()
@@ -111,8 +108,8 @@ class Model_Test():
         print(x_mae,y_mae)
         print(x_r2,y_r2)
 
-    def plot_solution(self):
-        test_idx = np.random.permutation(len(self.df))[0:2]
+    def plot_solution(self,num_tests = 2):
+        test_idx = np.random.permutation(len(self.df))[0:num_tests]
         test_batch_size = len(test_idx)
         test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
         x_pred,y_pred = self.model.predict(test_generator,steps=len(test_idx)//test_batch_size)
@@ -141,17 +138,19 @@ class Model_Test():
 
             pred_map = self.transforms.sample_to_map(pred_samples[i,:],boundry_coordinates,angle)
             fig,(ax1,ax2) = plt.subplots(1,2)
-            ax1.scatter(coordinate_map[:,0],coordinate_map[:,1],color = 'b')
-            ax1.scatter(pred_map[0][0],pred_map[0][1],color = 'r')
+            ax1.scatter(coordinate_map[:,0],coordinate_map[:,1],color = 'b',label = 'Solution')
+            ax1.scatter(pred_map[0][0],pred_map[0][1],color = 'r',label = 'Prediction')
             ax1.scatter(boundry_coordinates[:,0],boundry_coordinates[:,1])
             ax1.imshow(self.world_img,origin = 'lower')
 
             ax2.imshow(images[i],origin = 'lower')
-            ax2.scatter(pred_samples[i,0],pred_samples[i,1],color = 'r')
-            ax2.scatter(true_samples[i,0],true_samples[i,1],color = 'b')
+            ax2.scatter(pred_samples[i,0],pred_samples[i,1],color = 'r',label = 'Prediction')
+            ax2.scatter(true_samples[i,0],true_samples[i,1],color = 'b',label = 'Solution')
+
+            ax1.legend()
             plt.show()
 
 dataset_name = 'Thu 26 Aug 2021 03:29:43 PM '
-model_folder = '32_batch'
+model_folder = 'batch_128'
 test_bed = Model_Test(dataset_name,model_folder)
-test_bed()
+test_bed(10)
