@@ -59,7 +59,7 @@ class Dataset_Transformation():
 
         return new_coords
  
-    def coordinate_to_map(self,old_coords): 
+    def coordinate_to_map(self,old_coords,method = "unity scale"): 
         """
          Converts coordinates from lat,long to global map coordinates
 
@@ -74,18 +74,27 @@ class Dataset_Transformation():
          old_coords : ndarray
             A column array of longitudes and latitudes.
         """
-
         new_coords = np.zeros(old_coords.shape)
         if len(new_coords.shape) == 1:
             new_coords = np.reshape(new_coords, (1,len(new_coords)))
             old_coords = np.reshape(old_coords, (1,len(old_coords)))
-        lon_array1 = np.linspace(start = self.boundry[0],stop = self.boundry[2],num = self.image_size[0])
-        lon_array2 = np.arange(self.image_size[0])
-        new_coords[:,0] = np.interp(old_coords[:,0],lon_array1,lon_array2)
+        if method == "interpolation":
+            lon_array1 = np.linspace(start = self.boundry[0],stop = self.boundry[2],num = self.image_size[0])
+            lon_array2 = np.arange(self.image_size[0])
+            new_coords[:,0] = np.interp(old_coords[:,0],lon_array1,lon_array2)
 
-        lat_array1 = np.linspace(start = self.boundry[3],stop = self.boundry[1],num = self.image_size[1])
-        lat_array2 = np.arange(self.image_size[1])
-        new_coords[:,1] = np.interp(old_coords[:,1],lat_array1,lat_array2)
+            lat_array1 = np.linspace(start = self.boundry[3],stop = self.boundry[1],num = self.image_size[1])
+            lat_array2 = np.arange(self.image_size[1])
+            new_coords[:,1] = np.interp(old_coords[:,1],lat_array1,lat_array2)
+        elif method == "unity scale":
+            new_coords[:,0] = old_coords[:,0]-np.min((self.boundry[0],self.boundry[2]))
+            new_coords[:,1] = old_coords[:,1]-np.min((self.boundry[1],self.boundry[3]))
+
+            new_coords[:,0] = new_coords[:,0]/(np.max((self.boundry[0],self.boundry[2]))-np.min((self.boundry[0],self.boundry[2])))
+            new_coords[:,1] = new_coords[:,1]/(np.max((self.boundry[1],self.boundry[3]))-np.min((self.boundry[1],self.boundry[3])))
+
+            new_coords[:,0] = new_coords[:,0]*self.image_size[0]
+            new_coords[:,1] = new_coords[:,1]*self.image_size[1]
 
         return new_coords
 

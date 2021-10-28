@@ -64,7 +64,7 @@ class RSU_Placement_CNN():
         map_path = os.path.join(self.dataset_path,map_name)
         data_name = "data.csv"
         data_file_path = os.path.join(self.dataset_path,data_name)
-        images_folder = 'Images/samples'
+        images_folder = 'Images/map_images'
         images_path = os.path.join(self.dataset_path,images_folder)
 
         # Import world map

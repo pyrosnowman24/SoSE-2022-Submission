@@ -32,7 +32,7 @@ class Model_Test():
         map_path = os.path.join(self.dataset_path,map_name)
         data_name = "data.csv"
         data_file_path = os.path.join(self.dataset_path,data_name)
-        images_folder = 'Images/samples'
+        images_folder = 'Images/map_images'
         images_path = os.path.join(self.dataset_path,images_folder)
 
         # Create transforms class
@@ -150,7 +150,7 @@ class Model_Test():
             ax1.legend()
             plt.show()
 
-dataset_name = 'Thu 26 Aug 2021 03:29:43 PM '
+dataset_name = 'Tue 26 Oct 2021 03:35:35 PM '
 model_folder = 'batch_128'
 test_bed = Model_Test(dataset_name,model_folder)
-test_bed(10)
+test_bed(1)

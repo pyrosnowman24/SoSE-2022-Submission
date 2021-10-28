@@ -81,7 +81,7 @@ class Data_Generator():
         else:
             folder_name = named_file
         current_path = pathlib.Path().resolve()
-        folder_path = 'Map_Dataset_Generator/Datasets'
+        folder_path = 'Datasets'
         path = os.path.join(current_path,folder_path)
         folder = os.path.join(path, folder_name)
         image_folder = os.path.join(folder, "Images/samples")
@@ -249,13 +249,15 @@ class Data_Generator():
 
     def choose_intersection(self,intersections,center,number_solution=1): # chooses an intersection to be the solution to the problem
         # intersections = self.transforms.coordinate_to_map(intersections)
+        print(intersections.shape)
         nearest = np.zeros((intersections.shape[0],3))
         nearest[:,:2] = intersections
         nearest[:,2] = np.linalg.norm(np.subtract(nearest[:,:2],center),axis = 1)
         return np.reshape(nearest[nearest[:,2] == nearest[:,2].min(),:2][0,:],(number_solution,2))
 
 
-bbox =  -98.5149, 29.4441, -98.4734, 29.3876 # San Antonio Downtown
+# bbox =  -98.5149, 29.4441, -98.4734, 29.3876 # San Antonio Downtown
+bbox = -97.7907, 30.2330, -97.6664, 30.3338 # Austin Downtown
 data_size = [250,500]
 data_gen = Data_Generator(bbox,data_size = data_size)
-data_gen(10000,plot=False,save_data=True,named_file= "Thu 26 Aug 2021 03:29:43 PM ")
+data_gen(5,plot=False,save_data=False)
