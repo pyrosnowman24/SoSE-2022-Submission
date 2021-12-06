@@ -5,7 +5,7 @@ from numpy import core
 
 class Dataset_Transformation():
     """
-    Class containintg transformations needed to covert between the following coordinate systems:
+    Class containing transformations needed to covert between the following coordinate systems:
         Coordinates = (lon,lat)
         Global Map Array = Global map image size
         Sampled Map Array = Data image size

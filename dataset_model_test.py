@@ -150,7 +150,7 @@ class Model_Test():
             ax1.legend()
             plt.show()
 
-dataset_name = 'Tue 26 Oct 2021 03:35:35 PM '
+dataset_name = 'Thu 26 Aug 2021 03:29:43 PM '
 model_folder = 'batch_128'
 test_bed = Model_Test(dataset_name,model_folder)
 test_bed(1)
