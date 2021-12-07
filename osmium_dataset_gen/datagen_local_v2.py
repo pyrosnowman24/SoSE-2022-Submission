@@ -76,14 +76,18 @@ class Dataset_Generator():
                 cropped_img,transformed_solution = self.crop_image(coordinates,angle,solution)
                 building_image = self.crop_OSM_image(coordinates,angle,buildings)
                 road_image = self.crop_OSM_image(coordinates,angle,road_ways)
-                self.add_data(coordinates,center,angle,solution)
-                if save_data: self.df_to_csv(i,data_file)
-                if save_data: self.save_image(image_folder,cropped_img,index = i)
-                if save_data: self.save_image(building_folder,building_image,index = i)
-                if save_data: self.save_image(road_folder,road_image,index = i)
-                print("Completed ",i)
-                i = i+1
-                plt.show()
+                df_add_fail_check = self.add_data(coordinates,center,angle,solution)
+                if df_add_fail_check:
+                    print("Failed to add sample to df, generating new sample.")
+                    continue
+                else:
+                    if save_data: self.df_to_csv(i,data_file)
+                    if save_data: self.save_image(image_folder,cropped_img,index = i)
+                    if save_data: self.save_image(building_folder,building_image,index = i)
+                    if save_data: self.save_image(road_folder,road_image,index = i)
+                    print("Completed ",i)
+                    i = i+1
+                    plt.show()
 
     def create_files(self):
         """Determines if the provided database already exists, and if not creates a new one using the provided name. Returns the paths for the database directory, the data.csv file, and each image folder for the samples.
@@ -419,14 +423,14 @@ class Dataset_Generator():
         solution : ndarray
             Coordinates of the solution intersection for the sample.
         """
-        data_array = np.array((*coordinates.flatten(),*center.flatten(),angle,*solution.flatten()))
-        exit_var = True
-        while exit_var:
-            self.df_data.loc[len(self.df_data)] = data_array.tolist()
-            if self.df_data.shape[0] != 0 and self.df_data.iloc[len(self.df_data)-1]['solution2'] != data_array[-1]:
-                print("Error with adding value, retrying")
-            else:
-                exit_var = False
+        data_array = pd.Series([*coordinates.flatten(),*center.flatten(),angle,*solution.flatten()],self.df_data.columns)
+        
+        self.df_data = self.df_data.append(data_array,ignore_index=True)
+        # self.df_data.loc[len(self.df_data)] = data_array.tolist()
+        if self.df_data.shape[0] != 0 and self.df_data.iloc[len(self.df_data)-1]['solution2'] != data_array[-1]:
+            return True
+        else:
+            return False
 
     def df_to_csv(self,index,data_file):
         """Adds the data in the dataframe to the specified .csv file.
@@ -439,10 +443,10 @@ class Dataset_Generator():
             The file path of the .csv file that the new data should be added to.
         """
         self.df_data.index = np.arange(self.i_init,index+1)
-        # if index == 0 and self.new_file:
-        #     self.df_data[index:index+1].to_csv(data_file, mode='a')
-        # else:
-        self.df_data[-1:].to_csv(data_file, mode='a', header=False)
+        if index == 0:
+            self.df_data[index:index+1].to_csv(data_file, mode='a')
+        else:
+            self.df_data[-1:].to_csv(data_file, mode='a', header=False)
 
     def OSM_fig_to_img(self,OSM_data,coordinates):
         """Plots OSM data as a figure then converts it to a PIL image.
@@ -603,8 +607,12 @@ class Dataset_Generator():
 # bbox =  -98.5149, 29.4441, -98.4734, 29.3876 # San Antonio Downtown
 bbox = -97.7907, 30.2330, -97.6664, 30.3338 # Austin Downtown
 data_size = [250,500]
-OSM_file = "/home/ace/Desktop/NNWork/Map_Dataset_Generator/osmium_dataset_gen/austin_downtown.pbf"
+
+current_path = pathlib.Path().resolve()
+folder_path = 'osmium_dataset_gen'
+path = os.path.join(current_path,folder_path)
+OSM_file = os.path.join(path,"austin_downtown.pbf")
 folder_name = "Austin_downtown"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 11
+number_of_samples = 120
 data_generator(number_of_samples,save_data = True,plot=False)
