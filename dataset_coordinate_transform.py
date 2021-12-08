@@ -111,7 +111,8 @@ class Dataset_Transformation():
             Coordinates for the four corners of the sample. These points should be in the global map coordinate system. 
 
          angle : float
-            Angle in radians that the sample is rotated. The rotation is counter-clockwise. 
+            Angle in radians that the sample is rotated. The rotation is clockwise. 
+
          Returns
          -------
          final_coords : ndarray
@@ -124,7 +125,7 @@ class Dataset_Transformation():
         bound_center = self.getBoundsCenter(bounds)
         crop_center = np.subtract(bound_center,[bounds[0],bounds[1]])
         crop_points = np.apply_along_axis(self.recenter,1,coordinates,bound_center,crop_center)
-        rotated_points = np.apply_along_axis(self.rotate,1,crop_points,crop_center,angle)
+        rotated_points = np.apply_along_axis(self.rotate,1,crop_points,crop_center,-angle)
         final_coords = self.recenter(rotated_points,0,[self.data_size[0]/2,self.data_size[1]/2])
         return final_coords[4:,:]
 
@@ -141,7 +142,8 @@ class Dataset_Transformation():
             Coordinates for the four corners of the sample. These points should be in the global map coordinate system. 
 
          angle : float
-            Angle in radians that the sample is rotated. The rotation is counter-clockwise. 
+            Angle in radians that the sample is rotated. The rotation is clockwise. 
+
          Returns
          -------
          final_coords : ndarray
@@ -246,7 +248,7 @@ class Dataset_Transformation():
             Coordinates for the four corners of the sample. These points should be in the global map coordinate system. 
 
          angle : float
-            Angle in radians that the sample is rotated. The rotation is counter-clockwise. 
+            Angle in radians that the sample is rotated. The rotation is clockwise. 
 
          Returns
          -------
@@ -275,7 +277,7 @@ class Dataset_Transformation():
             Coordinates for the four corners of the sample. These points should be in the global map coordinate system. 
 
          angle : float
-            Angle in radians that the sample is rotated. The rotation is counter-clockwise. 
+            Angle in radians that the sample is rotated. The rotation is clockwise. 
             
          Returns
          -------
@@ -296,7 +298,6 @@ class Dataset_Transformation():
          dataset : ndarray
             Dataset from the .csv.   
 
-            
          Returns
          -------
          output_coordinates : ndarray

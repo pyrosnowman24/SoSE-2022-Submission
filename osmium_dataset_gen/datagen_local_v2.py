@@ -319,13 +319,13 @@ class Dataset_Generator():
             Coordinates of the solution intersection, but transformed to the coordinate system of the new image of the sampled area.
         """
         coordinates = np.vstack((coordinates,solution))
-        coordinates = self.transforms.coordinate_to_map(coordinates)
-        test_coords = self.transforms.map_to_sample(coordinates[-1,:],coordinates,angle)
-        bounds = self.getBounds(coordinates)
+        coordinates_map = self.transforms.coordinate_to_map(coordinates)
+        test_coords = self.transforms.map_to_sample(coordinates_map[-1,:],coordinates_map,angle)
+        bounds = self.getBounds(coordinates_map)
         img2 = self.global_image.crop(bounds.astype(int))
         bound_center = self.getBoundsCenter(bounds)
         crop_center = self.getCenter(img2)
-        crop_points = np.apply_along_axis(self.recenter,1,coordinates,bound_center,crop_center)
+        crop_points = np.apply_along_axis(self.recenter,1,coordinates_map,bound_center,crop_center)
         # In order for the osm data to be scalled correctly, it must be fit to this size. By pulling the information from here,
         # it makes it so this information dosnt need to be calculated unnecessarily again
         self.osm_image_size = self.getBounds(crop_points) 
@@ -340,8 +340,8 @@ class Dataset_Generator():
         if self.plot:
             fig,((ax0,ax1),(ax2,ax3)) = plt.subplots(2,2)
             ax0.imshow(self.global_image,origin = 'lower')
-            ax0.scatter(coordinates[-1,0],coordinates[-1,1],color = 'r')
-            ax0.scatter(coordinates[:-1,0],coordinates[:-1,1],marker='x',color = 'k')
+            ax0.scatter(coordinates_map[-1,0],coordinates_map[-1,1],color = 'r')
+            ax0.scatter(coordinates_map[:-1,0],coordinates_map[:-1,1],marker='x',color = 'k')
             ax1.imshow(img2,origin = 'lower')
             ax1.scatter(crop_points[-1,0],crop_points[-1,1],color = 'r')
             ax1.scatter(crop_points[:-1,0],crop_points[:-1,1],marker='x',color = 'k')
@@ -614,5 +614,5 @@ path = os.path.join(current_path,folder_path)
 OSM_file = os.path.join(path,"austin_downtown.pbf")
 folder_name = "Austin_downtown"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 120
+number_of_samples = 5000
 data_generator(number_of_samples,save_data = True,plot=False)

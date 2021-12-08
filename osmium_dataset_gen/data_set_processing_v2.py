@@ -53,6 +53,9 @@ class RSU_Placement_CNN():
         train_idx, valid_idx, test_idx = self.generate_split_indexes(train_test_split) 
         train_gen = self.generate_images(train_idx, batch_size=batch_size)
         valid_gen = self.generate_images(valid_idx, batch_size=validation_batch_size)
+
+
+
         opt = keras.optimizers.Adam(lr=init_lr, decay=init_lr / epochs)
         model.compile(optimizer=opt, 
                     loss={
@@ -63,20 +66,21 @@ class RSU_Placement_CNN():
                         'y_output': 'mae'})
 
         model_path = os.path.join(self.dataset_path,"model_checkpoint")
-        # callbacks = [
-        # ModelCheckpoint(model_path, monitor='val_loss')
-        # ]
-        # history = model.fit(train_gen,
-        #                     steps_per_epoch=len(train_idx)//batch_size,
-        #                     epochs=epochs,
-        #                     callbacks=callbacks,
-        #                     validation_data=valid_gen,
-        #                     validation_steps=len(valid_idx)//validation_batch_size)
-        # self.plot_history(history,fig_path = model_path)
-        # var_path = self.create_var_file(model_path)
-        # self.save_variable_file(var_path,epochs,init_lr,batch_size,valid_batch_size)
-        # self.evaluate_model(model,test_idx)
-        # plt.show()
+
+        callbacks = [
+        ModelCheckpoint(model_path, monitor='val_loss')
+        ]
+        history = model.fit(train_gen,
+                            steps_per_epoch=len(train_idx)//batch_size,
+                            epochs=epochs,
+                            callbacks=callbacks,
+                            validation_data=valid_gen,
+                            validation_steps=len(valid_idx)//validation_batch_size)
+        self.plot_history(history,fig_path = model_path)
+        var_path = self.create_var_file(model_path)
+        self.save_variable_file(var_path,epochs,init_lr,batch_size,validation_batch_size)
+        self.evaluate_model(model,test_idx)
+        plt.show()
 
     def import_files(self, database_name):
         """Function that pulls all relevent information from the specified database for the Class to use. The functions imports the images for each sample, imports the .csv file for sample data, imports the map used for the database, and sets up the transform class.
@@ -116,8 +120,8 @@ class RSU_Placement_CNN():
         self.transforms = Dataset_Transformation(self.bbox,self.world_img.size,self.data_size)
 
         # Import data.csv file
-        data = pd.read_csv(data_file_path)
-        data_array = data.to_numpy()
+        self.data = pd.read_csv(data_file_path)
+        data_array = self.data.to_numpy()
         data_array = self.transforms.prepare_dataset(data_array)
         self.df = pd.DataFrame(data_array[:,-2:],columns = ['x','y'])
 
@@ -173,7 +177,7 @@ class RSU_Placement_CNN():
         vars.to_csv(var_file)
 
     def evaluate_model(self,model,test_idx):
-        """Calculates the explained variance, the mean absolute error, and the r2 score for both the trained model.
+        """Calculates the explained variance, the mean absolute error, and the r2 score for the trained model.
 
         Parameters
         ----------
@@ -442,4 +446,4 @@ init_lr = 1e-4
 
 database_name = "Austin_downtown"
 cnn = RSU_Placement_CNN(database_name)
-cnn(200,init_lr = init_lr)
+cnn(200,init_lr = init_lr,batch_size=1)

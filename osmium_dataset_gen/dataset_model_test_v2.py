@@ -16,61 +16,110 @@ from sklearn import metrics
 import re
 
 class Model_Test():
+    """Class that takes in a trained CNN model and tests its performance.
+    """
     def __init__(self,dataset_name,model_folder):
+        """Creates a Model_Test class.
+
+        Parameters
+        ----------
+        dataset_name : string
+            The name of the dataset that the trained model will be tested with.
+        model_folder : string
+            The name of the model that will be tested.
+        """
         self.import_files(dataset_name,model_folder)
         
     def __call__(self,number_tests = 2):
+        """Runs the tests of the CNN model
+
+        Parameters
+        ----------
+        number_tests : int, optional
+            The number of samples that should be plotted, by default 2
+        """
         self.plot_solution(num_tests=number_tests)
 
-    def import_files(self,dataset_name,model_folder):
+    def import_files(self, database_name,model_folder):
+        """Function that pulls all relevent information from the specified database for the Class to use. The functions imports the images for each sample, imports the .csv file for sample data, imports the map used for the database, and sets up the transform class.
+
+        Parameters
+        ----------
+        database_name : string
+            The name of the database that will be used to train the CNN.
+        model_folder : string
+            The name of the directory of the trained CNN model that should be used.
+        """
+        # Set all file paths
         current_path = pathlib.Path().resolve()
         folder_path = 'Datasets'
         map_name = 'Map'
-        
-        # Create necessary paths for imports
         file_path = os.path.join(current_path,folder_path)
-        self.dataset_path = os.path.join(file_path,dataset_name)
+        self.dataset_path = os.path.join(file_path,database_name)
         map_path = os.path.join(self.dataset_path,map_name)
         data_name = "data.csv"
+        variable_name = "variables.csv"
         data_file_path = os.path.join(self.dataset_path,data_name)
-        map_images_folder = 'Images/map_images'
-        roads_images_folder = 'Images/map_images'
-        buildings_images_folder = 'Images/map_images'
-        map_images_path = os.path.join(self.dataset_path,map_images_folder)
-        roads_images_path = os.path.join(self.dataset_path,roads_images_folder)
-        buildings_images_path = os.path.join(self.dataset_path,buildings_images_folder)
+        variable_file = os.path.join(self.dataset_path,variable_name)
+        images_folder = 'Images/map_images'
+        buildings_folder = 'Images/building_images'
+        roads_folder = 'Images/road_images'
+        images_path = os.path.join(self.dataset_path,images_folder)
+        building_path = os.path.join(self.dataset_path,buildings_folder)
+        road_path = os.path.join(self.dataset_path,roads_folder)
+
+        # Import Database Variables
+        variables = pd.read_csv(variable_file).to_numpy()
+        self.bbox = variables[0][1:5]
+        self.data_size = variables[0][5:7].astype(int)
+
+        # Import world map
+        self.world_img = Image.open(map_path)
 
         # Create transforms class
-        self.world_img = Image.open(map_path)
-        self.bbox =  -97.7907, 30.2330, -97.6664, 30.3338 # Austin Downtown
-        self.data_size = [250,500]
         self.transforms = Dataset_Transformation(self.bbox,self.world_img.size,self.data_size)
 
-        # Import data
+        # Import data.csv file
         self.data = pd.read_csv(data_file_path)
-        self.data_array = self.data.to_numpy()
-        self.data_array = self.transforms.prepare_dataset(self.data_array)
-        self.df = pd.DataFrame(self.data_array[:,-2:],columns = ['x','y'])
+        data_array = self.data.to_numpy()
+        data_array = self.transforms.prepare_dataset(data_array)
+        self.df = pd.DataFrame(data_array[:,-2:],columns = ['x','y'])
 
-        map_files = glob.glob(os.path.join(map_images_path, "*.%s" % 'png'))
-        map_files.sort(key=lambda f: int(re.sub('\D', '', f)))
-        self.df['map_file'] = map_files
+        # Import images
+        files_map = glob.glob(os.path.join(images_path, "*.%s" % 'png'))
+        files_map.sort(key=lambda f: int(re.sub('\D', '', f)))
+        self.df['map'] = files_map
 
-        roads_files = glob.glob(os.path.join(roads_images_path, "*.%s" % 'png'))
-        roads_files.sort(key=lambda f: int(re.sub('\D', '', f)))
-        self.df['road_file'] = map_files
+        files_building = glob.glob(os.path.join(building_path, "*.%s" % 'png'))
+        files_building.sort(key=lambda f: int(re.sub('\D', '', f)))
+        self.df['building'] = files_building
 
-        buildings_files = glob.glob(os.path.join(buildings_images_path, "*.%s" % 'png'))
-        buildings_files.sort(key=lambda f: int(re.sub('\D', '', f)))
-        self.df['building_file'] = map_files
+        files_road = glob.glob(os.path.join(road_path, "*.%s" % 'png'))
+        files_road.sort(key=lambda f: int(re.sub('\D', '', f)))
+        self.df['road'] = files_road
 
         # Import Model
         model_path = os.path.join(self.dataset_path, model_folder)
         self.model = keras.models.load_model(model_path)
 
     def generate_images(self, image_idx, batch_size=32, is_training=True):
-        """
-        Used to generate a batch with images when training/testing/validating our Keras model.
+        """Used to generate batches of images.
+
+        Parameters
+        ----------
+        image_idx : ndarray
+            Array of sample ids that batches will be generated from.
+        batch_size : int, optional
+            Size of the batches that will be generated, by default 32
+        is_training : bool, optional
+            Flag that is used to determine if a python generator should be made of if the images should be returned, by default True
+
+        Yields
+        -------
+        combined : ndarray
+            Array of images from the map, roads, and buildings.
+          : ndarray
+            Array of the x and y coordinates of the solution to the sample.
         """
         # arrays to store our batched data
         combined, images, buildings, roads, x_array, y_array, = [], [], [], [], [], []
@@ -103,6 +152,22 @@ class Model_Test():
                 break
 
     def preprocess_image(self, img_path, gray_scale = False, rgb = False):
+        """Preprocesses images before they are used to train the model.
+
+        Parameters
+        ----------
+        img_path : string
+            Path to a specific image.
+        gray_scale : bool, optional
+            Flag to determine if the image should be converted to greyscale, by default False
+        rgb : bool, optional
+            Flag to determine if the image should be converted to RGB, by default False
+
+        Returns
+        -------
+         : PIL.image.image
+            Preprocessed image.
+        """
         im = Image.open(img_path)
         im = im.resize((self.data_size[0], self.data_size[1]))
         if rgb : im = im.convert('RGB')
@@ -111,6 +176,8 @@ class Model_Test():
         return im
 
     def score_model(self):
+        """Calculates the explained variance, the mean absolute error, and the r2 score for the trained model.
+        """
         test_idx  = np.random.permutation(len(self.df))[0:3000]
         test_batch_size = 300
         test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
@@ -134,6 +201,13 @@ class Model_Test():
         print(x_r2,y_r2)
 
     def plot_solution(self,num_tests = 2):
+        """Plots the output of the model compared to the actual solution.
+
+        Parameters
+        ----------
+        num_tests : int, optional
+            The number of samples that should be plotted, by default 2
+        """
         test_idx = np.random.permutation(len(self.df))[0:num_tests]
         test_batch_size = len(test_idx)
         test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
