@@ -156,7 +156,7 @@ class Dataset_Transformation():
         bounds_coords = self.getBounds(boundry_coordinates)
         bounds_center = self.getBoundsCenter(bounds_coords)
         center = np.array(( self.data_size[0]/2 , self.data_size[1]/2 ))
-        rotated_points = np.apply_along_axis(self.rotate,1,coordinates,center,-angle)
+        rotated_points = np.apply_along_axis(self.rotate,1,coordinates,center,angle)
         bounds2 = self.getBounds(rotated_points)
         center2 = self.getBoundsCenter(bounds2)
         final_coords = self.recenter(rotated_points,center2,bounds_center)

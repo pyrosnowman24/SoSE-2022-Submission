@@ -81,9 +81,9 @@ class Model_Test():
 
         # Import data.csv file
         self.data = pd.read_csv(data_file_path)
-        data_array = self.data.to_numpy()
-        data_array = self.transforms.prepare_dataset(data_array)
-        self.df = pd.DataFrame(data_array[:,-2:],columns = ['x','y'])
+        self.data_array = self.data.to_numpy()
+        self.data_array = self.transforms.prepare_dataset(self.data_array)
+        self.df = pd.DataFrame(self.data_array[:,-2:],columns = ['x','y'])
 
         # Import images
         files_map = glob.glob(os.path.join(images_path, "*.%s" % 'png'))
@@ -129,12 +129,12 @@ class Model_Test():
                 
                 x_coord = sample['x']
                 y_coord = sample['y']
-                map = sample['map_file']
+                map = sample['map']
                 im_map = self.preprocess_image(map,rgb=True)
-                building = sample['building_file']
+                building = sample['building']
                 im_building = self.preprocess_image(building,gray_scale=True)
                 im_building = np.reshape(im_building,(self.data_size[1],self.data_size[0],1))
-                road = sample['road_file']
+                road = sample['road']
                 im_roads = self.preprocess_image(road,gray_scale=True)
                 im_roads = np.reshape(im_roads,(self.data_size[1],self.data_size[0],1))
                 
@@ -273,7 +273,7 @@ class Model_Test():
             ax1.legend()
             plt.show()
 
-dataset_name = 'Tue 26 Oct 2021 03:35:35 PM '
-model_folder = 'batch_128'
+dataset_name = 'Austin_downtown'
+model_folder = 'batch_64'
 test_bed = Model_Test(dataset_name,model_folder)
 test_bed(1)

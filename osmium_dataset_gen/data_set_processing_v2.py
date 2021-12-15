@@ -79,7 +79,6 @@ class RSU_Placement_CNN():
         self.plot_history(history,fig_path = model_path)
         var_path = self.create_var_file(model_path)
         self.save_variable_file(var_path,epochs,init_lr,batch_size,validation_batch_size)
-        self.evaluate_model(model,test_idx)
         plt.show()
 
     def import_files(self, database_name):
@@ -175,41 +174,6 @@ class RSU_Placement_CNN():
         vars = pd.DataFrame(None,columns=["num_epochs","lr","batch","val_batch"])
         vars.loc[0] = np.array((num_epochs,lr,batch,val_batch)).tolist()
         vars.to_csv(var_file)
-
-    def evaluate_model(self,model,test_idx):
-        """Calculates the explained variance, the mean absolute error, and the r2 score for the trained model.
-
-        Parameters
-        ----------
-        model : tensorflow.python.keras.engine.functional.Functional
-            Trained model.
-        test_idx : ndarray
-            Array of sample indexes that will be used to test the model.
-        """
-        test_batch_size = len(test_idx)/10
-        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
-        x_pred, y_pred = model.predict(test_generator, steps=len(test_idx)//test_batch_size)
-        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=False)
-        images, buildings, roads, x_true, y_true = [], [], [], [], []
-        for test_batch in test_generator:
-            map = test_batch[0]
-            building = test_batch[1]
-            road = test_batch[2]
-            labels = test_batch[3]
-            images.extend(map)
-            buildings.extend(building)
-            roads.extend(road)
-            x_true.extend(labels[0])
-            y_true.extend(labels[1])
-        x_explained_variance = metrics.explained_variance_score(x_true,x_pred) # 1 is best, lower is worse
-        y_explained_variance = metrics.explained_variance_score(y_true,y_pred)
-        x_mae = metrics.mean_absolute_error(x_true,x_pred) # Lower is better
-        y_mae = metrics.mean_absolute_error(y_true,y_pred)
-        x_r2 = metrics.r2_score(x_true,x_pred) # 0 is the best
-        y_r2 = metrics.r2_score(y_true,y_pred)
-        print(x_explained_variance,y_explained_variance)
-        print(x_mae,y_mae)
-        print(x_r2,y_r2)
 
     def plot_history(self,history,fig_path = None):
         """Plots the training history of the model and can save it.
@@ -446,4 +410,4 @@ init_lr = 1e-4
 
 database_name = "Austin_downtown"
 cnn = RSU_Placement_CNN(database_name)
-cnn(200,init_lr = init_lr,batch_size=1)
+cnn(200,init_lr = init_lr,batch_size=64)
