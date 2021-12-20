@@ -15,6 +15,8 @@ import glob
 from sklearn import metrics
 import re
 
+import time
+
 class Model_Test():
     """Class that takes in a trained CNN model and tests its performance.
     """
@@ -38,7 +40,8 @@ class Model_Test():
         number_tests : int, optional
             The number of samples that should be plotted, by default 2
         """
-        self.plot_solution(num_tests=number_tests)
+        self.score_model()
+        # self.plot_solution(num_tests=number_tests)
 
     def import_files(self, database_name,model_folder):
         """Function that pulls all relevent information from the specified database for the Class to use. The functions imports the images for each sample, imports the .csv file for sample data, imports the map used for the database, and sets up the transform class.
@@ -123,10 +126,26 @@ class Model_Test():
         """
         # arrays to store our batched data
         combined, images, buildings, roads, x_array, y_array, = [], [], [], [], [], []
+
+        # combined = []
+        # images = np.zeros(batch_size)
+        # buildings = np.zeros(batch_size)
+        # roads = np.zeros(batch_size)
+        # x_array = np.zeros(batch_size)
+        # y_array = np.zeros(batch_size)
+
         while True:
-            for idx in image_idx:
+            for i,idx in enumerate(image_idx):
+                # print('\n',i) # ~~~~~~~~~~~~~~~~~~~~~~~~
+                # start_time = time.time()
+                # checkpoint_time = time.time()
+
+
                 sample = self.df.iloc[idx]
-                
+                # print("Get sample",time.time()-start_time)
+                # print(time.time()-checkpoint_time)
+                # checkpoint_time = time.time()
+
                 x_coord = sample['x']
                 y_coord = sample['y']
                 map = sample['map']
@@ -137,15 +156,30 @@ class Model_Test():
                 road = sample['road']
                 im_roads = self.preprocess_image(road,gray_scale=True)
                 im_roads = np.reshape(im_roads,(self.data_size[1],self.data_size[0],1))
-                
+
+                # print("Pull info from sample",time.time()-start_time)
+                # print(time.time()-checkpoint_time)
+                # checkpoint_time = time.time()
+
+                # x_array[i] = x_coord
+                # y_array[i] = y_coord
+                # images[i] = im_map
+                # buildings[i] = im_building
+                # roads[i] = im_roads
+
                 x_array.append(x_coord)
                 y_array.append(y_coord)
                 images.append(im_map)
                 buildings.append(im_building)
                 roads.append(im_roads)
-                combined = np.concatenate((images,buildings,roads),axis = 3)
+                # combined = np.concatenate((images,buildings,roads),axis = 3)
+
+                # print("append data",time.time()-start_time)
+                # print(time.time()-checkpoint_time)
+
                 # yielding condition
                 if len(images) >= batch_size:
+                    combined = np.concatenate((images,buildings,roads),axis = 3)
                     yield np.array(combined), [np.array(x_array), np.array(y_array)]
                     combined, images, buildings, roads, x_array, y_array, = [], [], [], [], [], []
             if not is_training:
@@ -178,11 +212,11 @@ class Model_Test():
     def score_model(self):
         """Calculates the explained variance, the mean absolute error, and the r2 score for the trained model.
         """
-        test_idx  = np.random.permutation(len(self.df))[0:3000]
-        test_batch_size = 300
+        test_idx  = np.random.permutation(len(self.df))
+        test_batch_size = 100
         test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
         x_pred, y_pred = self.model.predict(test_generator, steps=len(test_idx)//test_batch_size)
-        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=False)
+        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
         images, x_true, y_true = [], [], []
         for test_batch in test_generator:
             image = test_batch[0]
@@ -225,55 +259,32 @@ class Model_Test():
         pred_output = np.hstack((x_pred,y_pred))
         true_output = np.hstack((x_true,y_true))
 
-        print("output coords:")
-        print(pred_output)
-        print(true_output)
-
         pred_samples = self.transforms.output_to_sample(np.copy(pred_output))
         true_samples = self.transforms.output_to_sample(np.copy(true_output))
-
-        print("sample coords:")
-        print(pred_samples)
-        print(true_samples)
 
         for i in range(test_batch_size):
             boundry_coordinates = self.data_array[test_idx[i],1:9]
             boundry_coordinates = np.reshape(boundry_coordinates,(4,2))
             angle = self.data_array[test_idx[i],11]  
             coordinates = self.data_array[test_idx[i],-2:]
-            print("Correct Solution (Output coordinate):")
-            print(coordinates)
             coordinate_map = self.transforms.output_to_map(coordinates,boundry_coordinates,angle)
-            print("Correct Solution (Map Coordinate)")
-            print(coordinate_map)
-
-            coordinate_solution = self.transforms.map_to_sample(coordinate_map,boundry_coordinates,angle)
-            print(coordinate_solution)
-
             pred_map = self.transforms.sample_to_map(pred_samples[i,:],boundry_coordinates,angle)
-            fig,(ax1,ax2,ax3) = plt.subplots(1,3)
+
+            fig,(ax1,ax2) = plt.subplots(1,2)
             ax1.scatter(coordinate_map[:,0],coordinate_map[:,1],color = 'b',label = 'Solution')
-            # ax1.scatter(pred_map[0][0],pred_map[0][1],color = 'r',label = 'Prediction')
+            ax1.scatter(pred_map[0][0],pred_map[0][1],color = 'r',label = 'Prediction')
             ax1.scatter(boundry_coordinates[:,0],boundry_coordinates[:,1])
             ax1.imshow(self.world_img,origin = 'lower')
 
             ax2.imshow(images[i][:,:,0:3],origin = 'upper')
-            # ax2.scatter(pred_samples[i,0],pred_samples[i,1],color = 'r',label = 'Prediction')
+            ax2.scatter(pred_samples[i,0],pred_samples[i,1],color = 'r',label = 'Prediction')
             ax2.scatter(true_samples[i,0],true_samples[i,1],color = 'b',label = 'Solution')
             ax2.set_title(angle * 180 / np.pi)
-            ax2.invert_yaxis()
-            ax2.invert_xaxis()
-
-            ax3.imshow(images[i][:,:,0:3],origin = 'upper')
-            # ax2.scatter(pred_samples[i,0],pred_samples[i,1],color = 'r',label = 'Prediction')
-            ax3.scatter(true_samples[i,0],true_samples[i,1],color = 'b',label = 'Solution')
-            ax3.set_title(angle * 180 / np.pi)
-            ax3.invert_yaxis()
 
             ax1.legend()
             plt.show()
 
 dataset_name = 'Austin_downtown'
-model_folder = 'batch_64'
+model_folder = 'batch_32'
 test_bed = Model_Test(dataset_name,model_folder)
-test_bed(1)
+test_bed(5)

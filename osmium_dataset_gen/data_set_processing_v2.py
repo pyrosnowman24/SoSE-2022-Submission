@@ -296,9 +296,10 @@ class RSU_Placement_CNN():
                 images.append(im_map)
                 buildings.append(im_building)
                 roads.append(im_roads)
-                combined = np.concatenate((images,buildings,roads),axis = 3)
+                
                 # yielding condition
                 if len(images) >= batch_size:
+                    combined = np.concatenate((images,buildings,roads),axis = 3)
                     yield np.array(combined), [np.array(x_array), np.array(y_array)]
                     combined, images, buildings, roads, x_array, y_array, = [], [], [], [], [], []
             if not is_training:
@@ -410,4 +411,4 @@ init_lr = 1e-4
 
 database_name = "Austin_downtown"
 cnn = RSU_Placement_CNN(database_name)
-cnn(200,init_lr = init_lr,batch_size=64)
+cnn(200,init_lr = init_lr,batch_size=128)
