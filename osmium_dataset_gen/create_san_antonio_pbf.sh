@@ -1,7 +1,7 @@
 SOURCE_FILE=../Datasets/texas-latest.osm.pbf
 SA_FILE=sa_downtown.pbf
-SA_ROAD_FILE=roads.pbf
-SA_BUILDING_FILE=buildings.pbf
+SA_ROAD_FILE=sa_roads.pbf
+SA_BUILDING_FILE=sa_buildings.pbf
 
 [ ! -f "$SA_FILE" ] && osmium extract -b -98.5149,29.4441,-98.4734,29.3876 $SOURCE_FILE -o $SA_FILE
 

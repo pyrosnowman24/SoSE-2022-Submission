@@ -4,9 +4,7 @@ from numpy.lib.npyio import save
 import pyrosm
 import os, sys, io
 import pathlib
-from datetime import datetime
 import geotiler
-from scipy.sparse import coo
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset_coordinate_transform import Dataset_Transformation
 from PIL.Image import FLIP_TOP_BOTTOM
@@ -18,7 +16,7 @@ import geopandas
 class Dataset_Generator():
     """Class used to generate image data to train a CNN for the RSU placement problem. The class can create a new dataset or add additional samples to an existing dataset.
     """
-    def __init__(self,global_bounding_box,sample_bounding_box,folder_name,OSM_file,zoom=17):
+    def __init__(self,global_bounding_box,sample_bounding_box,folder_name,OSM_file,zoom=17,map_image=None):
         """Creates a Dataset_Generator class.
 
         Parameters
@@ -33,6 +31,8 @@ class Dataset_Generator():
             The path to the OSM file that the sample data will be generated from.
         zoom : int, optional
             A parameter used by geotiller when creating an image of the map, by default 17
+        map_image : string
+            Provides a path to a premade .png for the map.
             
         """
         self.OSM_file = OSM_file
@@ -40,8 +40,11 @@ class Dataset_Generator():
         self.global_bounding_box = global_bounding_box
         self.sample_bounding_box = sample_bounding_box
         self.folder_name = folder_name
-        self.global_map  = geotiler.Map(extent=self.global_bounding_box, zoom = zoom)
-        self.global_image = geotiler.render_map(self.global_map).transpose(FLIP_TOP_BOTTOM)
+        if map_image is None:
+            self.global_map  = geotiler.Map(extent=self.global_bounding_box, zoom = zoom)
+            self.global_image = geotiler.render_map(self.global_map).transpose(FLIP_TOP_BOTTOM)
+        else:
+            self.global_image = Image.open(map_image)
         self.transforms = Dataset_Transformation(global_bounding_box,self.global_image.size,sample_bounding_box)
         self.df_data = pd.DataFrame(data=None,columns=["cord1","cord2","cord3","cord4","cord5","cord6","cord7","cord8","center1","center2","angle","solution1","solution2"])
 
@@ -612,7 +615,14 @@ current_path = pathlib.Path().resolve()
 folder_path = 'osmium_dataset_gen'
 path = os.path.join(current_path,folder_path)
 OSM_file = os.path.join(path,"austin_downtown.pbf")
+map_image = os.path.join(path,"Map")
+
 folder_name = "Austin_downtown"
-data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 5000
+data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file,map_image = map_image)
+number_of_samples = 10
+
+# Testing to see about how many intersections are detected in a whole city
+# intersections, road_ways, buildings = data_generator.find_constrained_intersections(((-97.7907,30.2330),(-97.6664,30.338),(-97.6664,30.2330),(-97.7907,30.338)))
+# print(intersections.shape)
+
 data_generator(number_of_samples,save_data = True,plot=False)

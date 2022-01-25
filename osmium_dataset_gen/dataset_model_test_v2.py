@@ -15,7 +15,6 @@ import glob
 from sklearn import metrics
 import re
 
-import time
 
 class Model_Test():
     """Class that takes in a trained CNN model and tests its performance.
@@ -40,8 +39,8 @@ class Model_Test():
         number_tests : int, optional
             The number of samples that should be plotted, by default 2
         """
-        self.score_model()
-        # self.plot_solution(num_tests=number_tests)
+        # self.score_model()
+        self.plot_solution(num_tests=number_tests)
 
     def import_files(self, database_name,model_folder):
         """Function that pulls all relevent information from the specified database for the Class to use. The functions imports the images for each sample, imports the .csv file for sample data, imports the map used for the database, and sets up the transform class.
@@ -213,7 +212,7 @@ class Model_Test():
         """Calculates the explained variance, the mean absolute error, and the r2 score for the trained model.
         """
         test_idx  = np.random.permutation(len(self.df))
-        test_batch_size = 100
+        test_batch_size = 1000
         test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
         x_pred, y_pred = self.model.predict(test_generator, steps=len(test_idx)//test_batch_size)
         test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
@@ -285,6 +284,6 @@ class Model_Test():
             plt.show()
 
 dataset_name = 'Austin_downtown'
-model_folder = 'batch_32'
+model_folder = 'batch_64'
 test_bed = Model_Test(dataset_name,model_folder)
 test_bed(5)
