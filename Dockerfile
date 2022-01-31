@@ -8,7 +8,7 @@ RUN apt-get upgrade && \
     python3-pip \
     python3-dev \
     python3-venv \
-    git \
+    git 
 RUN pip3 install --upgrade pip3
 WORKDIR \app
 COPY requirements.txt requirements.txt
