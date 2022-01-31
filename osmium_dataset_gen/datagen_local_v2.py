@@ -611,14 +611,14 @@ class Dataset_Generator():
 bbox = -97.7907, 30.2330, -97.6664, 30.3338 # Austin Downtown
 data_size = [250,500]
 
-current_path = pathlib.Path().resolve()
+current_path = str(pathlib.Path().resolve())
 folder_path = 'osmium_dataset_gen'
-path = os.path.join(current_path,folder_path)
-print(current_path)
-print(path)
-OSM_file = os.path.join(path,"austin_downtown.pbf")
+if folder_path in current_path:
+    OSM_file = os.path.join(current_path,"austin_downtown.pbf")
+else:
+    path = os.path.join(current_path,folder_path)
+    OSM_file = os.path.join(path,"austin_downtown.pbf")
 # map_image = os.path.join(path,"Map")
-
 folder_name = "Austin_downtown"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
 number_of_samples = 10
@@ -627,4 +627,4 @@ number_of_samples = 10
 # intersections, road_ways, buildings = data_generator.find_constrained_intersections(((-97.7907,30.2330),(-97.6664,30.338),(-97.6664,30.2330),(-97.7907,30.338)))
 # print(intersections.shape)
 
-# data_generator(number_of_samples,save_data = False,plot=False)
+data_generator(number_of_samples,save_data = False,plot=False)
