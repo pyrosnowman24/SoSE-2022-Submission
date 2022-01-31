@@ -10,3 +10,4 @@ scikit-learn
 tensorflow
 keras
 shapely
+nano
