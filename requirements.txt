@@ -5,7 +5,6 @@ geotiler
 pyrosm
 pandas
 scipy
-glob
 pathlib
 scikit-learn
 tensorflow
