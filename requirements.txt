@@ -8,6 +8,5 @@ scipy
 pathlib
 scikit-learn
 tensorflow
-keras
+keras <2.8, >=2.7
 shapely
-nano

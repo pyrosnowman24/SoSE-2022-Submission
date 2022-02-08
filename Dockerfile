@@ -8,7 +8,9 @@ RUN apt-get upgrade && \
     python3-pip \
     python3-dev \
     python3-venv \
-    git 
+    build-essential \
+    git \
+    nano 
 WORKDIR \app
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
