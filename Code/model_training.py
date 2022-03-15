@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import os, sys
 from PIL import Image, ImageOps
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset_coordinate_transform import Dataset_Transformation
 from tensorflow import keras
 from tensorflow.keras import layers

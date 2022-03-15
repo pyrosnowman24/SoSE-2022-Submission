@@ -4,7 +4,6 @@ from PIL import Image, ImageOps
 from scipy.sparse import coo
 from tensorflow.python.autograph.utils.ag_logging import _output_to_stdout
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset_coordinate_transform import Dataset_Transformation
 from tensorflow import keras
 from tensorflow.keras import layers

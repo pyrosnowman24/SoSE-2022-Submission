@@ -5,7 +5,6 @@ import pyrosm
 import os, sys, io
 import pathlib
 import geotiler
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset_coordinate_transform import Dataset_Transformation
 from PIL.Image import FLIP_TOP_BOTTOM
 from PIL import Image
