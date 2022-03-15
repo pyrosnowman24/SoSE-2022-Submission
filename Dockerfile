@@ -13,6 +13,6 @@ RUN apt-get upgrade && \
     nano 
 WORKDIR \app
 COPY requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt --default-timeout=100
 
 RUN git clone https://github.com/pyrosnowman24/Map_Dataset_Generator.git

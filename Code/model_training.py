@@ -411,4 +411,4 @@ init_lr = 1e-4
 
 database_name = "Austin_downtown"
 cnn = RSU_Placement_CNN(database_name)
-cnn(200,init_lr = init_lr,batch_size=128)
+cnn(200,init_lr = init_lr,batch_size=64)

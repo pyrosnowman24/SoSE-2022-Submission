@@ -268,14 +268,14 @@ class Dataset_Generator():
         else:
             coordinates = None
 
-        # if self.plot:
-        #     map_intersections = self.transforms.coordinate_to_map(intersections)
-        #     map_coordinates = self.transforms.coordinate_to_map(coordinates)
-        #     fig,ax = plt.subplots(1)
-        #     ax.imshow(self.global_image,origin = "lower")
-        #     ax.scatter(map_intersections[:,0],map_intersections[:,1],marker = 'x')
-        #     ax.scatter(map_coordinates[:,0],map_coordinates[:,1])
-        #     plt.draw()
+        if self.plot:
+            map_intersections = self.transforms.coordinate_to_map(intersections)
+            map_coordinates = self.transforms.coordinate_to_map(coordinates)
+            fig,ax = plt.subplots(1)
+            ax.imshow(self.global_image,origin = "lower")
+            ax.scatter(map_intersections[:,0],map_intersections[:,1],marker = 'x')
+            ax.scatter(map_coordinates[:,0],map_coordinates[:,1])
+            plt.draw()
 
 
         return intersections, road_ways, buildings
@@ -627,4 +627,4 @@ number_of_samples = 10
 # intersections, road_ways, buildings = data_generator.find_constrained_intersections(((-97.7907,30.2330),(-97.6664,30.338),(-97.6664,30.2330),(-97.7907,30.338)))
 # print(intersections.shape)
 
-data_generator(number_of_samples,save_data = False,plot=False)
+data_generator(number_of_samples,save_data = False,plot=True)

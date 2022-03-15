@@ -261,27 +261,48 @@ class Model_Test():
         pred_samples = self.transforms.output_to_sample(np.copy(pred_output))
         true_samples = self.transforms.output_to_sample(np.copy(true_output))
 
-        for i in range(test_batch_size):
-            boundry_coordinates = self.data_array[test_idx[i],1:9]
-            boundry_coordinates = np.reshape(boundry_coordinates,(4,2))
-            angle = self.data_array[test_idx[i],11]  
-            coordinates = self.data_array[test_idx[i],-2:]
-            coordinate_map = self.transforms.output_to_map(coordinates,boundry_coordinates,angle)
-            pred_map = self.transforms.sample_to_map(pred_samples[i,:],boundry_coordinates,angle)
+        # for i in range(test_batch_size):
+        #     boundry_coordinates = self.data_array[test_idx[i],1:9]
+        #     boundry_coordinates = np.reshape(boundry_coordinates,(4,2))
+        #     angle = self.data_array[test_idx[i],11]  
+        #     coordinates = self.data_array[test_idx[i],-2:]
+        #     coordinate_map = self.transforms.output_to_map(coordinates,boundry_coordinates,angle)
+        #     pred_map = self.transforms.sample_to_map(pred_samples[i,:],boundry_coordinates,angle)
 
-            fig,(ax1,ax2) = plt.subplots(1,2)
-            ax1.scatter(coordinate_map[:,0],coordinate_map[:,1],color = 'b',label = 'Solution')
-            ax1.scatter(pred_map[0][0],pred_map[0][1],color = 'r',label = 'Prediction')
-            ax1.scatter(boundry_coordinates[:,0],boundry_coordinates[:,1])
-            ax1.imshow(self.world_img,origin = 'lower')
+        #     fig,(ax1,ax2) = plt.subplots(1,2)
+        #     ax1.scatter(coordinate_map[:,0],coordinate_map[:,1],color = 'b',label = 'Solution')
+        #     ax1.scatter(pred_map[0][0],pred_map[0][1],color = 'r',label = 'Prediction')
+        #     ax1.scatter(boundry_coordinates[:,0],boundry_coordinates[:,1])
+        #     ax1.imshow(self.world_img,origin = 'lower')
 
-            ax2.imshow(images[i][:,:,0:3],origin = 'upper')
-            ax2.scatter(pred_samples[i,0],pred_samples[i,1],color = 'r',label = 'Prediction')
-            ax2.scatter(true_samples[i,0],true_samples[i,1],color = 'b',label = 'Solution')
-            ax2.set_title(angle * 180 / np.pi)
+        #     ax2.imshow(images[i][:,:,0:3],origin = 'upper')
+        #     ax2.scatter(pred_samples[i,0],pred_samples[i,1],color = 'r',label = 'Prediction')
+        #     ax2.scatter(true_samples[i,0],true_samples[i,1],color = 'b',label = 'Solution')
+        #     ax2.set_title(angle * 180 / np.pi)
 
-            ax1.legend()
-            plt.show()
+        #     ax1.legend()
+        #     plt.show()
+        
+        fig,((ax1,ax2),(ax3,ax4)) = plt.subplots(2,2)
+        ax1.imshow(images[0][:,:,0:3],origin = 'upper')
+        ax1.scatter(pred_samples[0,0],pred_samples[0,1],color = 'r',label = 'Prediction')
+        ax1.scatter(true_samples[0,0],true_samples[0,1],color = 'b',label = 'Solution')
+
+        ax2.imshow(images[1][:,:,0:3],origin = 'upper')
+        ax2.scatter(pred_samples[1,0],pred_samples[1,1],color = 'r',label = 'Prediction')
+        ax2.scatter(true_samples[1,0],true_samples[1,1],color = 'b',label = 'Solution')
+
+        ax3.imshow(images[2][:,:,0:3],origin = 'upper')
+        ax3.scatter(pred_samples[2,0],pred_samples[2,1],color = 'r',label = 'Prediction')
+        ax3.scatter(true_samples[2,0],true_samples[2,1],color = 'b',label = 'Solution')
+
+        ax4.imshow(images[3][:,:,0:3],origin = 'upper')
+        ax4.scatter(pred_samples[3,0],pred_samples[3,1],color = 'r',label = 'Prediction')
+        ax4.scatter(true_samples[3,0],true_samples[3,1],color = 'b',label = 'Solution')
+
+        ax1.legend()
+        plt.show()
+
 
 dataset_name = 'Austin_downtown'
 model_folder = 'batch_64'
