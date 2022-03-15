@@ -1,0 +1,19 @@
+name: pyrosm_env
+channels:
+ - conda-forge
+dependencies:
+ - python=3.8
+ - pyrosm
+ - cykhash=1.0.2
+ - pygeos=0.10
+ - pip
+ - numpy
+ - matplotlib
+ - Pillow
+ - pandas
+ - scipy
+ - pathlib
+ - scikit-learn
+# - keras <2.8, >=2.7
+ - tensorflow
+ - shapely
