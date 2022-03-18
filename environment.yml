@@ -14,7 +14,6 @@ dependencies:
  - scipy
  - pathlib
  - scikit-learn
-# - keras <2.8, >=2.7
-# - tensorflow
  - pytorch
+ - pytorch-lightning
  - shapely
