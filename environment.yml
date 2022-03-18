@@ -2,9 +2,9 @@ name: pyrosm_env
 channels:
  - conda-forge
 dependencies:
- - python=3.8
+ - python=3.9
  - pyrosm
- - cykhash=1.0.2
+ - cykhash
  - pygeos=0.10
  - pip
  - numpy
