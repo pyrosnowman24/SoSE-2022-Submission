@@ -6,7 +6,8 @@ dependencies:
  - pyrosm
  - cykhash
  - pygeos=0.10
- - pip
+ - pip:
+     - geotiler
  - numpy
  - matplotlib
  - Pillow
