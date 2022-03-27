@@ -79,6 +79,7 @@ class Dataset_Generator():
                 building_image = self.crop_OSM_image(coordinates,angle,buildings)
                 road_image = self.crop_OSM_image(coordinates,angle,road_ways)
                 df_add_fail_check = self.add_data(coordinates,center,angle,solution)
+
                 if df_add_fail_check:
                     print("Failed to add sample to df, generating new sample.")
                     continue
@@ -109,7 +110,7 @@ class Dataset_Generator():
         index : int
             Index that the generated data should begin at in the .csv file.
         """
-        current_path = pathlib.Path().resolve()
+        current_path = pathlib.Path().resolve().parent
         folder_path = 'Datasets'
         path = os.path.join(current_path,folder_path)
         folder = os.path.join(path, self.folder_name)
@@ -427,7 +428,10 @@ class Dataset_Generator():
         """
         data_array = pd.Series([*coordinates.flatten(),*center.flatten(),angle,*solution.flatten()],self.df_data.columns)
         
-        self.df_data = self.df_data.append(data_array,ignore_index=True)
+        self.df_data = self.df_data.append(data_array,ignore_index=True) 
+        
+        # self.df_data = pd.concat((self.df_data,data_array),ignore_index=True,axis=0, join='outer')
+
         # self.df_data.loc[len(self.df_data)] = data_array.tolist()
         if self.df_data.shape[0] != 0 and self.df_data.iloc[len(self.df_data)-1]['solution2'] != data_array[-1]:
             return True
@@ -611,7 +615,7 @@ bbox = -97.7907, 30.2330, -97.6664, 30.3338 # Austin Downtown
 data_size = [250,500]
 
 current_path = str(pathlib.Path().resolve())
-folder_path = 'osmium_dataset_gen'
+folder_path = 'Code'
 if folder_path in current_path:
     OSM_file = os.path.join(current_path,"austin_downtown.pbf")
 else:
@@ -620,7 +624,7 @@ else:
 # map_image = os.path.join(path,"Map")
 folder_name = "Austin_downtown"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 10
+number_of_samples = 2
 
 # Testing to see about how many intersections are detected in a whole city
 # intersections, road_ways, buildings = data_generator.find_constrained_intersections(((-97.7907,30.2330),(-97.6664,30.338),(-97.6664,30.2330),(-97.7907,30.338)))

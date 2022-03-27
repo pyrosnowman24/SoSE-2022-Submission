@@ -12,8 +12,9 @@ import tensorflow as tf
 import pathlib
 import glob
 from sklearn import metrics
+from sklearn.preprocessing import normalize
 import re
-
+from haversine import haversine, Unit
 
 class Model_Test():
     """Class that takes in a trained CNN model and tests its performance.
@@ -38,8 +39,8 @@ class Model_Test():
         number_tests : int, optional
             The number of samples that should be plotted, by default 2
         """
-        # self.score_model()
-        self.plot_solution(num_tests=number_tests)
+        self.score_model()
+        # self.plot_solution(num_tests=number_tests)
 
     def import_files(self, database_name,model_folder):
         """Function that pulls all relevent information from the specified database for the Class to use. The functions imports the images for each sample, imports the .csv file for sample data, imports the map used for the database, and sets up the transform class.
@@ -210,27 +211,66 @@ class Model_Test():
     def score_model(self):
         """Calculates the explained variance, the mean absolute error, and the r2 score for the trained model.
         """
-        test_idx  = np.random.permutation(len(self.df))
-        test_batch_size = 1000
-        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
+        test_idx  = np.random.permutation(3000)
+        test_batch_size = 60
+        test_generator = self.generate_images(test_idx, batch_size=test_batch_size)
         x_pred, y_pred = self.model.predict(test_generator, steps=len(test_idx)//test_batch_size)
-        test_generator = self.generate_images(test_idx, batch_size=test_batch_size, is_training=True)
+        images, buildings, roads, x_true, y_true = [], [], [], [], []
+
         images, x_true, y_true = [], [], []
-        for test_batch in test_generator:
-            image = test_batch[0]
-            labels = test_batch[1]
-            images.extend(image)
-            x_true.extend(labels[0])
-            y_true.extend(labels[1])
+        for idx in test_idx:
+            sample = self.df.iloc[idx]
+            map = sample['map']
+            im_map = self.preprocess_image(map,rgb=True)
+            building = sample['building']
+            im_building = self.preprocess_image(building,gray_scale=True)
+            im_building = np.reshape(im_building,(self.data_size[1],self.data_size[0],1))
+            road = sample['road']
+            im_roads = self.preprocess_image(road,gray_scale=True)
+            im_roads = np.reshape(im_roads,(self.data_size[1],self.data_size[0],1))
+
+            images.append(im_map)
+            buildings.append(im_building)
+            roads.append(im_roads)
+            x_true.append(sample['x'])
+            y_true.append(sample['y'])
+
+        x_true = np.reshape(x_true,(len(x_true),1))
+        y_true = np.reshape(y_true,(len(y_true),1))
+        pred_output = np.hstack((x_pred,y_pred))
+        true_output = np.hstack((x_true,y_true))
+
+        pred_samples = self.transforms.output_to_sample(np.copy(pred_output))
+        true_samples = self.transforms.output_to_sample(np.copy(true_output))
+
+        haversine_distance_history = []
+
+        for i in range(len(test_idx)):
+            boundry_coordinates = self.data_array[test_idx[i],1:9]
+            boundry_coordinates = np.reshape(boundry_coordinates,(4,2))
+            angle = self.data_array[test_idx[i],11]  
+            coordinates = self.data_array[test_idx[i],-2:]
+            true_map = self.transforms.output_to_map(coordinates,boundry_coordinates,angle)
+            pred_map = self.transforms.sample_to_map(pred_samples[i,:],boundry_coordinates,angle)
+            true_coordinates = self.transforms.map_to_coordinate(true_map)
+            pred_coordinates = self.transforms.map_to_coordinate(pred_map)
+            haversine_distance_history.append(haversine(true_coordinates[0],pred_coordinates[0], unit=Unit.METERS))
+
         x_explained_variance = metrics.explained_variance_score(x_true,x_pred) # 1 is best, lower is worse
         y_explained_variance = metrics.explained_variance_score(y_true,y_pred)
         x_mae = metrics.mean_absolute_error(x_true,x_pred) # Lower is better
         y_mae = metrics.mean_absolute_error(y_true,y_pred)
-        x_r2 = metrics.r2_score(x_true,x_pred) # 0 is the best
-        y_r2 = metrics.r2_score(y_true,y_pred)
         print(x_explained_variance,y_explained_variance)
         print(x_mae,y_mae)
-        print(x_r2,y_r2)
+        print(np.mean(haversine_distance_history))
+
+        fig,ax = plt.subplots(1)
+        # ax.scatter(range(len(haversine_distance_history)),haversine_distance_history)
+        ax.boxplot(haversine_distance_history,vert=False)
+        ax.set_title("Spread of Haversine Distances")
+        ax.set_xlabel("Distance (m)")
+        plt.yticks([])
+        plt.show()
 
     def plot_solution(self,num_tests = 2):
         """Plots the output of the model compared to the actual solution.
@@ -304,6 +344,8 @@ class Model_Test():
 
 
 dataset_name = 'Austin_downtown'
-model_folder = 'batch_64'
+model_folder = '200epochs_64batch'
 test_bed = Model_Test(dataset_name,model_folder)
 test_bed(5)
+
+
