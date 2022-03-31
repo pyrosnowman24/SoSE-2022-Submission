@@ -47,7 +47,7 @@ class Dataset_Transformation():
         if len(new_coords.shape) == 1:
             new_coords = np.reshape(new_coords, (1,len(new_coords)))
             old_coords = np.reshape(old_coords, (1,len(old_coords)))
-        elif method == "unity scale":
+        if method == "unity scale":
 
             new_coords[:,0] = old_coords[:,0]/self.image_size[0]
             new_coords[:,1] = old_coords[:,1]/self.image_size[1]

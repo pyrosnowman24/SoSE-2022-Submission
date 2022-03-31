@@ -297,6 +297,11 @@ class Dataset_Generator():
          : ndarray
             The coordinates of the intersection that an RSU should be placed at.
         """
+        # fig,ax = plt.subplots(1)  % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ax.scatter(intersections[:,0],intersections[:,1])
+        # ax.scatter(center[0],center[1],color='g')
+        # plt.draw()
+
         nearest = np.zeros((intersections.shape[0],3))
         nearest[:,:2] = np.copy(intersections)
         nearest[:,2] = np.linalg.norm(np.subtract(nearest[:,:2],center),axis = 1)
@@ -402,21 +407,21 @@ class Dataset_Generator():
         im4_center = self.getCenter(img4)
         final_coords = self.recenter(rotated_points,im3_center,im4_center)
 
-        if self.plot:
-            fig,(ax1,ax2,ax3) = plt.subplots(3,1)
-            ax1.imshow(img2,origin = 'lower')
-            ax1.scatter(crop_points[:,0],crop_points[:,1],marker='x',color = 'k')
-            ax1.scatter(crop_center[0],crop_center[1],marker='x',color='g')
-            ax2.imshow(img3,origin = 'lower')
-            ax2.scatter(rotated_points[:,0],rotated_points[:,1],marker='x',color = 'k')
-            ax2.scatter(im3_center[0],im3_center[1],marker='x',color='g')
-            ax3.imshow(img4,origin = 'lower')
-            ax3.scatter(final_coords[:,0],final_coords[:,1],marker='x',color = 'k')
-            ax2.set_title(angle)
-            ax3.set_title(angle * 180 / np.pi)
-            ax3.set_xlim(0,self.sample_bounding_box[0])
-            ax3.set_ylim(0,self.sample_bounding_box[1])
-            plt.draw()
+        # if self.plot:
+        #     fig,(ax1,ax2,ax3) = plt.subplots(3,1)
+        #     ax1.imshow(img2,origin = 'lower')
+        #     ax1.scatter(crop_points[:,0],crop_points[:,1],marker='x',color = 'k')
+        #     ax1.scatter(crop_center[0],crop_center[1],marker='x',color='g')
+        #     ax2.imshow(img3,origin = 'lower')
+        #     ax2.scatter(rotated_points[:,0],rotated_points[:,1],marker='x',color = 'k')
+        #     ax2.scatter(im3_center[0],im3_center[1],marker='x',color='g')
+        #     ax3.imshow(img4,origin = 'lower')
+        #     ax3.scatter(final_coords[:,0],final_coords[:,1],marker='x',color = 'k')
+        #     ax2.set_title(angle)
+        #     ax3.set_title(angle * 180 / np.pi)
+        #     ax3.set_xlim(0,self.sample_bounding_box[0])
+        #     ax3.set_ylim(0,self.sample_bounding_box[1])
+        #     plt.draw()
 
         return img4
 
