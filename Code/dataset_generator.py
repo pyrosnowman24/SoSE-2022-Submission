@@ -110,7 +110,7 @@ class Dataset_Generator():
         index : int
             Index that the generated data should begin at in the .csv file.
         """
-        current_path = pathlib.Path().resolve().parent
+        current_path = pathlib.Path.cwd()
         folder_path = 'Datasets'
         path = os.path.join(current_path,folder_path)
         folder = os.path.join(path, self.folder_name)
@@ -614,7 +614,7 @@ class Dataset_Generator():
 bbox = -97.7907, 30.2330, -97.6664, 30.3338 # Austin Downtown
 data_size = [250,500]
 
-current_path = str(pathlib.Path().resolve())
+current_path = str(pathlib.Path.cwd())
 folder_path = 'Code'
 if folder_path in current_path:
     OSM_file = os.path.join(current_path,"austin_downtown.pbf")
@@ -622,12 +622,8 @@ else:
     path = os.path.join(current_path,folder_path)
     OSM_file = os.path.join(path,"austin_downtown.pbf")
 # map_image = os.path.join(path,"Map")
-folder_name = "Austin_downtown"
+folder_name = "test_data"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
 number_of_samples = 2
 
-# Testing to see about how many intersections are detected in a whole city
-# intersections, road_ways, buildings = data_generator.find_constrained_intersections(((-97.7907,30.2330),(-97.6664,30.338),(-97.6664,30.2330),(-97.7907,30.338)))
-# print(intersections.shape)
-
-data_generator(number_of_samples,save_data = False,plot=True)
+data_generator(number_of_samples,save_data = True,plot=False)

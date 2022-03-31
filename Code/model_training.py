@@ -89,7 +89,7 @@ class RSU_Placement_CNN():
             The name of the database that will be used to train the CNN.
         """
         # Set all file paths
-        current_path = pathlib.Path().resolve()
+        current_path = pathlib.Path.cwd()
         folder_path = 'Datasets'
         map_name = 'Map'
         file_path = os.path.join(current_path,folder_path)
