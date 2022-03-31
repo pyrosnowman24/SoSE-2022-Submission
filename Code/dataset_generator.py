@@ -637,6 +637,6 @@ else:
 # map_image = os.path.join(path,"Map")
 folder_name = "test_data"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 1
+number_of_samples = 10
 
-data_generator(number_of_samples,save_data = False,plot=True)
+data_generator(number_of_samples,save_data = True,plot=False)
