@@ -75,7 +75,7 @@ class Dataset_Generator():
                 continue
             else:
                 solution = self.choose_intersection(intersections,center)
-                cropped_img,transformed_solution = self.crop_image(coordinates,angle,solution)
+                cropped_img,transformed_solution = self.crop_image(coordinates,angle,intersections,solution)
                 building_image = self.crop_OSM_image(coordinates,angle,buildings)
                 road_image = self.crop_OSM_image(coordinates,angle,road_ways)
                 df_add_fail_check = self.add_data(coordinates,center,angle,solution)
@@ -268,14 +268,14 @@ class Dataset_Generator():
         else:
             coordinates = None
 
-        if self.plot:
-            map_intersections = self.transforms.coordinate_to_map(intersections)
-            map_coordinates = self.transforms.coordinate_to_map(coordinates)
-            fig,ax = plt.subplots(1)
-            ax.imshow(self.global_image,origin = "lower")
-            ax.scatter(map_intersections[:,0],map_intersections[:,1],marker = 'x')
-            ax.scatter(map_coordinates[:,0],map_coordinates[:,1])
-            plt.draw()
+        # if self.plot:
+        #     map_intersections = self.transforms.coordinate_to_map(intersections)
+        #     map_coordinates = self.transforms.coordinate_to_map(coordinates)
+        #     fig,ax = plt.subplots(1)
+        #     ax.imshow(self.global_image,origin = "lower")
+        #     ax.scatter(map_intersections[:,0],map_intersections[:,1],marker = 'x')
+        #     ax.scatter(map_coordinates[:,0],map_coordinates[:,1])
+        #     plt.draw()
 
 
         return intersections, road_ways, buildings
@@ -302,7 +302,7 @@ class Dataset_Generator():
         nearest[:,2] = np.linalg.norm(np.subtract(nearest[:,:2],center),axis = 1)
         return np.reshape(nearest[nearest[:,2] == nearest[:,2].min(),:2][0,:],(number_solution,2))
 
-    def crop_image(self,coordinates,angle,solution):
+    def crop_image(self,coordinates,angle,intersections,solution):
         """Creates the image of the sample area by cropping it out of the map. 
 
         Parameters
@@ -321,19 +321,22 @@ class Dataset_Generator():
          : ndarray
             Coordinates of the solution intersection, but transformed to the coordinate system of the new image of the sampled area.
         """
+        coordinates = np.vstack((coordinates,intersections))
         coordinates = np.vstack((coordinates,solution))
+
         coordinates_map = self.transforms.coordinate_to_map(coordinates)
-        test_coords = self.transforms.map_to_sample(coordinates_map[-1,:],coordinates_map,angle)
         bounds = self.getBounds(coordinates_map)
         img2 = self.global_image.crop(bounds.astype(int))
+
         bound_center = self.getBoundsCenter(bounds)
         crop_center = self.getCenter(img2)
         crop_points = np.apply_along_axis(self.recenter,1,coordinates_map,bound_center,crop_center)
         # In order for the osm data to be scalled correctly, it must be fit to this size. By pulling the information from here,
         # it makes it so this information dosnt need to be calculated unnecessarily again
         self.osm_image_size = self.getBounds(crop_points) 
-        rotated_points = np.apply_along_axis(self.rotate,1,crop_points,crop_center,-angle)
-        img3 = img2.rotate(-angle * 180 / np.pi, expand=True)
+        rotated_points = np.apply_along_axis(self.rotate,1,crop_points,crop_center,angle)
+        img3 = img2.rotate(angle * 180 / np.pi, expand=True)
+
         im3_center = self.getCenter(img3)
         rotated_points = self.recenter(rotated_points,0,im3_center)
         img4 = img3.crop(self.getBounds(rotated_points).astype(int))
@@ -341,21 +344,26 @@ class Dataset_Generator():
         final_coords = self.recenter(rotated_points,im3_center,im4_center)
 
         if self.plot:
-            fig,((ax0,ax1),(ax2,ax3)) = plt.subplots(2,2)
-            ax0.imshow(self.global_image,origin = 'lower')
-            ax0.scatter(coordinates_map[-1,0],coordinates_map[-1,1],color = 'r')
-            ax0.scatter(coordinates_map[:-1,0],coordinates_map[:-1,1],marker='x',color = 'k')
+            fig,(ax1,ax2,ax3) = plt.subplots(1,3)
+            # fig,((ax0,ax1),(ax2,ax3)) = plt.subplots(2,2)
+            # ax0.imshow(self.global_image,origin = 'lower')
+            # ax0.scatter(coordinates_map[-1,0],coordinates_map[-1,1],color = 'r')
+            # ax0.scatter(coordinates_map[:-1,0],coordinates_map[:-1,1],marker='x',color = 'k')
             ax1.imshow(img2,origin = 'lower')
-            ax1.scatter(crop_points[-1,0],crop_points[-1,1],color = 'r')
-            ax1.scatter(crop_points[:-1,0],crop_points[:-1,1],marker='x',color = 'k')
-            ax1.scatter(crop_center[0],crop_center[1],marker='x',color='g')
+            ax1.scatter(crop_points[-1,0],crop_points[-1,1],color = 'r') # Solution
+            ax1.scatter(crop_points[:4,0],crop_points[:4,1],marker='x',color = 'b') # Corners
+            ax1.scatter(crop_points[4:-1,0],crop_points[4:-1,1],marker='x',color = 'k') # Intersections
+            ax1.scatter(crop_center[0],crop_center[1],marker='x',color='g') # Center
             ax2.imshow(img3,origin = 'lower')
-            ax2.scatter(rotated_points[-1,0],rotated_points[-1,1],color = 'r')
-            ax2.scatter(rotated_points[:-1,0],rotated_points[:-1,1],marker='x',color = 'k')
-            ax2.scatter(im3_center[0],im3_center[1],marker='x',color='g')
+            ax2.scatter(rotated_points[-1,0],rotated_points[-1,1],color = 'r') # Solution
+            ax2.scatter(rotated_points[:4,0],rotated_points[:4,1],marker='x',color = 'b') # Corners
+            ax2.scatter(rotated_points[4:-1,0],rotated_points[4:-1,1],marker='x',color = 'k') # Intersections
+            ax2.scatter(im3_center[0],im3_center[1],marker='x',color='g') # Center
             ax3.imshow(img4,origin = 'lower')
-            ax3.scatter(final_coords[-1,0],final_coords[-1,1],color = 'r')
-            ax3.scatter(final_coords[:-1,0],final_coords[:-1,1],marker='x',color = 'k')
+            ax3.scatter(final_coords[-1,0],final_coords[-1,1],color = 'r') # Solution
+            ax3.scatter(final_coords[:4,0],final_coords[:4,1],marker='x',color = 'b') # Corners
+            ax3.scatter(final_coords[4:-1,0],final_coords[4:-1,1],marker='x',color = 'k') # Intersections
+            ax3.scatter(im4_center[0],im4_center[1],marker='x',color='g') # Center
             ax2.set_title(angle)
             ax3.set_title(angle * 180 / np.pi)
             ax3.set_xlim(0,self.sample_bounding_box[0])
@@ -386,8 +394,8 @@ class Dataset_Generator():
         crop_points = self.coordinate_transform(coordinates,bounds,img2.size)
         bounds = self.getBounds(crop_points)
         crop_center = self.getCenter(img2)
-        rotated_points = np.apply_along_axis(self.rotate,1,crop_points,crop_center,-angle)
-        img3 = img2.rotate(-angle * 180 / np.pi, expand=True)
+        rotated_points = np.apply_along_axis(self.rotate,1,crop_points,crop_center,angle)
+        img3 = img2.rotate(angle * 180 / np.pi, expand=True)
         im3_center = self.getCenter(img3)
         rotated_points = self.recenter(rotated_points,0,im3_center)
         img4 = img3.crop(self.getBounds(rotated_points).astype(int))
@@ -624,6 +632,6 @@ else:
 # map_image = os.path.join(path,"Map")
 folder_name = "test_data"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 2
+number_of_samples = 1
 
-data_generator(number_of_samples,save_data = True,plot=False)
+data_generator(number_of_samples,save_data = False,plot=True)
