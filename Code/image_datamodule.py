@@ -6,6 +6,7 @@ import pandas as pd
 import os
 from PIL import Image, ImageOps
 import numpy as np
+from dataset_coordinate_transform import Dataset_Transformation
 
 import matplotlib.pyplot as plt
 
@@ -16,9 +17,13 @@ class RSUIntersectionDataset(Dataset):
         self.road_dir = os.path.join(root_dir,"Images/road_images/")
         self.building_dir = os.path.join(root_dir,"Images/building_images/")
         self.map_dir = os.path.join(root_dir,"Images/map_images/")
+
         variables_csv = os.path.join(root_dir,"variables.csv")
         variables = pd.read_csv(variables_csv).to_numpy()
         self.data_size = variables[0][5:7].astype(int)
+        self.global_bounds = variables[0][1:5]
+        world_img = Image.open(os.path.join(root_dir,'Map'))
+        self.transforms = Dataset_Transformation(self.global_bounds,world_img.size,self.data_size)
 
     def __len__(self):
         return len(self.rsu_intersections)
@@ -28,6 +33,7 @@ class RSUIntersectionDataset(Dataset):
             idx = idx.tolist()
 
         data = self.rsu_intersections.iloc[idx]
+        data = self.preprocess_data(data)
         map_image_name = os.path.join(self.map_dir,"image_"+str(idx)+".png")
         map_image = Image.open(map_image_name)
 
@@ -67,16 +73,26 @@ class RSUIntersectionDataset(Dataset):
         im = np.array(im) / 255.0
         return im
 
+    def preprocess_data(self,dataset):
+        return self.transforms.prepare_data(dataset)
+
 class RSUIntersectionDataModule(pl.LightningDataModule):
-    def __init__(self,csv_file: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/data.csv", root_dir: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/", batch_size: int = 32):
+    def __init__(self,csv_file: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/data.csv", root_dir: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/", batch_size: int = 25):
         super().__init__()
         self.csv_file = csv_file
         self.root_dir = root_dir
         self.batch_size = batch_size
+        self.train_test_split = .7
         self.setup()
 
     def setup(self):
         self.rsu_database = RSUIntersectionDataset(csv_file = self.csv_file, root_dir = self.root_dir)
+        train_size = int(self.train_test_split*len(self.rsu_database))
+        test_size = len(self.rsu_database) - train_size
+        self.train_dataset,self.test_dataset = torch.utils.data.random_split(self.rsu_database,[train_size,test_size])
 
     def train_dataloader(self):
-        return DataLoader(self.rsu_database, batch_size = self.batch_size)
+        return DataLoader(self.train_dataset, batch_size = self.batch_size)
+
+    def test_dataloader(self):
+        return DataLoader(self.test_dataset, batch_size = self.batch_size)

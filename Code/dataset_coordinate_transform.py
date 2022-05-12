@@ -5,7 +5,7 @@ from numpy import core
 
 class Dataset_Transformation():
     """
-    Class containing transformations needed to covert between the following coordinate systems:
+    Class containing transformations needed to convert between the following coordinate systems:
         Coordinates = (lon,lat)
         Global Map Array = Global map image size
         Sampled Map Array = Data image size
@@ -315,6 +315,35 @@ class Dataset_Transformation():
             boundry_coordinates = dataset[i,1:9]
             dataset[i,12:] = self.map_to_output(dataset[i,12:],boundry_coordinates=np.reshape(boundry_coordinates,(4,2)),angle=dataset[i,11])
         return dataset
+
+    def prepare_data(self,data):
+        """
+         Prepares the numpy array from the .csv for use with a CNN. Converts all the coordinates to the map coordinate system, then converts the solution to the output coordinate system.
+
+         Parameters
+         ----------
+         dataset : ndarray
+            Dataset from the .csv.   
+
+         Returns
+         -------
+         output_coordinates : ndarray
+            Dataset with the coordinates transformed. 
+         
+        """
+        data_numpy = data.to_numpy()
+        
+        data_numpy[1:3] = self.coordinate_to_map( data_numpy[1:3])
+        data_numpy[3:5] = self.coordinate_to_map( data_numpy[3:5])
+        data_numpy[5:7] = self.coordinate_to_map( data_numpy[5:7])
+        data_numpy[7:9] = self.coordinate_to_map( data_numpy[7:9])
+        data_numpy[9:11] = self.coordinate_to_map( data_numpy[9:11])
+        data_numpy[12:] = self.coordinate_to_map( data_numpy[12:])
+        
+        boundry_coordinates =  data_numpy[1:9]
+        data_numpy[12:] = self.map_to_output(data_numpy[12:],boundry_coordinates=np.reshape(boundry_coordinates,(4,2)),angle= data_numpy[11])
+        data[:] = data_numpy
+        return data
 # The below functions are for the transformations above
 
     def getBounds(self,points):
