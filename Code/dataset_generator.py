@@ -45,7 +45,7 @@ class Dataset_Generator():
         else:
             self.global_image = Image.open(map_image)
         self.transforms = Dataset_Transformation(global_bounding_box,self.global_image.size,sample_bounding_box)
-        self.df_data = pd.DataFrame(data=None,columns=["cord1","cord2","cord3","cord4","cord5","cord6","cord7","cord8","center1","center2","angle","solution1","solution2"])
+        self.df_data = pd.DataFrame(data=None,columns=["cord1","cord2","cord3","cord4","cord5","cord6","cord7","cord8","center1","center2","angle","solution1","solution2","map_image","building_image","road_image"])
 
     def __call__(self,number_of_samples,plot=False,save_data = True):
         """Creates the requested number of samples and adds them to the database.
@@ -68,6 +68,7 @@ class Dataset_Generator():
         if save_data: self.save_variables(variable_file)
 
         while i < number_of_samples:
+            map_name, building_name, road_name = self.image_names(i)
             coordinates,center,angle = self.generate_area()
             intersections, road_ways, buildings = self.find_constrained_intersections(coordinates)
             if intersections is None or intersections.shape[0] == 0 or buildings is None or road_ways is None:
@@ -78,16 +79,16 @@ class Dataset_Generator():
                 cropped_img,transformed_solution = self.crop_image(coordinates,angle,intersections,solution)
                 building_image = self.crop_OSM_image(coordinates,angle,buildings)
                 road_image = self.crop_OSM_image(coordinates,angle,road_ways)
-                df_add_fail_check = self.add_data(coordinates,center,angle,solution)
+                df_add_fail_check = self.add_data(coordinates,center,angle,solution, map_name, building_name, road_name)
 
                 if df_add_fail_check:
                     print("Failed to add sample to df, generating new sample.")
                     continue
                 else:
                     if save_data: self.df_to_csv(i,data_file)
-                    if save_data: self.save_image(image_folder,cropped_img,index = i)
-                    if save_data: self.save_image(building_folder,building_image,index = i)
-                    if save_data: self.save_image(road_folder,road_image,index = i)
+                    if save_data: self.save_image(image_folder,cropped_img,index = i, assigned_name = map_name)
+                    if save_data: self.save_image(building_folder,building_image,index = i, assigned_name = building_name)
+                    if save_data: self.save_image(road_folder,road_image,index = i, assigned_name = road_name)
                     print("Completed ",i)
                     i = i+1
                     plt.show()
@@ -170,7 +171,11 @@ class Dataset_Generator():
         file.close()
         return line_count
 
-    def save_image(self,folder,image,index = 0,assigned_name=None):
+    def image_names(self,index):
+        name = "image_"+str(index)+".png"
+        return name, name, name
+
+    def save_image(self,folder,image,index = 0,assigned_name = None):
         """Saves an image to a designated directory path.
 
         Parameters
@@ -184,12 +189,15 @@ class Dataset_Generator():
         assigned_name : string, optional
             Designated name of the file if it is different then "image_index.png", by default None
         """
-        name = "image_"+str(index)+".png"
+        
         if assigned_name is not None:
             name = assigned_name
+        else:
+            name = "image_"+str(index)+".png"
         
         image_name = os.path.join(folder, name)
         image.save(image_name,"PNG")
+        return name
 
     def generate_area(self):
         """Generates a random sample from the map.
@@ -425,7 +433,7 @@ class Dataset_Generator():
 
         return img4
 
-    def add_data(self,coordinates,center,angle,solution):
+    def add_data(self,coordinates,center,angle,solution, map_name, building_name, road_name):
         """Adds the data of the current sample to the database of sample data.
 
         Parameters
@@ -439,14 +447,14 @@ class Dataset_Generator():
         solution : ndarray
             Coordinates of the solution intersection for the sample.
         """
-        data_array = pd.Series([*coordinates.flatten(),*center.flatten(),angle,*solution.flatten()],self.df_data.columns)
+        data_array = pd.Series([*coordinates.flatten(),*center.flatten(),angle,*solution.flatten(), map_name, building_name, road_name],self.df_data.columns)
         
         self.df_data = self.df_data.append(data_array,ignore_index=True) 
         
         # self.df_data = pd.concat((self.df_data,data_array),ignore_index=True,axis=0, join='outer')
 
         # self.df_data.loc[len(self.df_data)] = data_array.tolist()
-        if self.df_data.shape[0] != 0 and self.df_data.iloc[len(self.df_data)-1]['solution2'] != data_array[-1]:
+        if self.df_data.shape[0] != 0 and self.df_data.iloc[len(self.df_data)-1]['road_image'] != data_array[-1]:
             return True
         else:
             return False
@@ -635,8 +643,8 @@ else:
     path = os.path.join(current_path,folder_path)
     OSM_file = os.path.join(path,"austin_downtown.pbf")
 # map_image = os.path.join(path,"Map")
-folder_name = "Austin_downtown"
+folder_name = "Test_data"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 150
+number_of_samples = 15
 
 data_generator(number_of_samples,save_data = True,plot=False)

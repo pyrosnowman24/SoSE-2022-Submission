@@ -33,14 +33,14 @@ class RSUIntersectionDataset(Dataset):
             idx = idx.tolist()
 
         data = self.rsu_intersections.iloc[idx]
-        data = self.preprocess_data(data)
-        map_image_name = os.path.join(self.map_dir,"image_"+str(idx)+".png")
+        data[:-3] = self.preprocess_data(data[:-3])
+        map_image_name = os.path.join(self.map_dir,data['map_image'])
         map_image = Image.open(map_image_name)
 
-        road_image_name = os.path.join(self.road_dir,"image_"+str(idx)+".png")
+        road_image_name = os.path.join(self.road_dir,data['road_image'])
         road_image = Image.open(road_image_name)
 
-        building_image_name = os.path.join(self.building_dir,"image_"+str(idx)+".png")
+        building_image_name = os.path.join(self.building_dir,data['building_image'])
         building_image = Image.open(building_image_name)
 
         data = data[1:].to_dict()
