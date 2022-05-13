@@ -92,7 +92,7 @@ class RSU_Placement_Model(LightningModule):
         return metrics
 
 rsu_cnn_model = RSU_Placement_Model(network=CnnModel())
-trainer = Trainer(max_epochs=10)
+trainer = Trainer(max_epochs=10,default_root_dir="/home/acelab/Dissertation/Map_dataset_script/checkpoints")
 rsu_data = RSUIntersectionDataModule(csv_file = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/data.csv",
                                      root_dir = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/",
                                      batch_size = 5)

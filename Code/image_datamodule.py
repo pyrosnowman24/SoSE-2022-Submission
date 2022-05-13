@@ -1,4 +1,5 @@
 import csv
+from turtle import color, colormode
 import torch
 import pytorch_lightning as pl
 from torch.utils.data import Dataset,DataLoader
@@ -96,3 +97,15 @@ class RSUIntersectionDataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size = self.batch_size)
+
+test_datamodule = RSUIntersectionDataModule()
+batch = test_datamodule.rsu_database.__getitem__(150)
+solution = np.array((batch["solution1"],batch["solution2"]))
+solution = test_datamodule.rsu_database.transforms.output_to_sample(solution)
+print(solution)
+fig,(ax1,ax2,ax3) = plt.subplots(1,3)
+ax1.imshow(batch["map"],origin = 'lower')
+ax1.scatter(solution[0],solution[0])
+ax2.imshow(batch["building"], cmap='gray',origin = 'lower')
+ax3.imshow(batch["road"], cmap='gray',origin = 'lower')
+plt.show()
