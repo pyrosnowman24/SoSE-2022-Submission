@@ -23,8 +23,8 @@ class RSUIntersectionDataset(Dataset):
         variables = pd.read_csv(variables_csv).to_numpy()
         self.data_size = variables[0][5:7].astype(int)
         self.global_bounds = variables[0][1:5]
-        world_img = Image.open(os.path.join(root_dir,'Map'))
-        self.transforms = Dataset_Transformation(self.global_bounds,world_img.size,self.data_size)
+        self.world_img = Image.open(os.path.join(root_dir,'Map'))
+        self.transforms = Dataset_Transformation(self.global_bounds,self.world_img.size,self.data_size)
 
     def __len__(self):
         return len(self.rsu_intersections)
@@ -78,7 +78,7 @@ class RSUIntersectionDataset(Dataset):
         return self.transforms.prepare_data(dataset)
 
 class RSUIntersectionDataModule(pl.LightningDataModule):
-    def __init__(self,csv_file: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/data.csv", root_dir: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/Austin_downtown/", batch_size: int = 25):
+    def __init__(self,csv_file: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/test_dataset/data.csv", root_dir: str = "/home/acelab/Dissertation/Map_dataset_script/Datasets/test_dataset/", batch_size: int = 25):
         super().__init__()
         self.csv_file = csv_file
         self.root_dir = root_dir
@@ -97,15 +97,3 @@ class RSUIntersectionDataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size = self.batch_size)
-
-test_datamodule = RSUIntersectionDataModule()
-batch = test_datamodule.rsu_database.__getitem__(150)
-solution = np.array((batch["solution1"],batch["solution2"]))
-solution = test_datamodule.rsu_database.transforms.output_to_sample(solution)
-print(solution)
-fig,(ax1,ax2,ax3) = plt.subplots(1,3)
-ax1.imshow(batch["map"],origin = 'lower')
-ax1.scatter(solution[0],solution[0])
-ax2.imshow(batch["building"], cmap='gray',origin = 'lower')
-ax3.imshow(batch["road"], cmap='gray',origin = 'lower')
-plt.show()

@@ -643,8 +643,8 @@ else:
     path = os.path.join(current_path,folder_path)
     OSM_file = os.path.join(path,"austin_downtown.pbf")
 # map_image = os.path.join(path,"Map")
-folder_name = "Austin_downtown"
+folder_name = "test_dataset"
 data_generator = Dataset_Generator(bbox,data_size,folder_name,OSM_file)
-number_of_samples = 152
+number_of_samples = 50
 
-data_generator(number_of_samples,save_data = True,plot=True)
+data_generator(number_of_samples,save_data = True,plot=False)
